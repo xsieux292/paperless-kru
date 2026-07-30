@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* ปรับโดยปุ่ม "ขนาดตัวอักษร" — ค่าเริ่มต้น 1 = ปกติ */
+    --font-scale: 1;
+  }
+
+  html {
+    /* ทุกหน่วย rem ในระบบจะขยาย/ย่อตามค่านี้ ทำให้ปรับขนาดตัวอักษรได้ทั้งหน้า */
+    font-size: calc(16px * var(--font-scale));
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-slate-50 font-sans text-slate-800 antialiased;
+  }
+
+  /* โฟกัสชัดเจนสำหรับผู้ใช้คีย์บอร์ด */
+  :focus-visible {
+    @apply outline-none ring-4 ring-primary-500/40 ring-offset-2 ring-offset-white;
+  }
+
+  /* เคารพการตั้งค่า "ลดการเคลื่อนไหว" ของเครื่องผู้ใช้ */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* พื้นที่แตะขั้นต่ำ 44px ตามแนวทาง accessibility */
+  .tap-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+
+  .card {
+    @apply rounded-3xl border border-slate-200 bg-white shadow-sm;
+  }
+}
+
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+}

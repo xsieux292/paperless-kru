@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบช่วยทำเอกสารและบัญชีสำหรับครู</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts (Sarabun & Prompt) -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Sarabun', 'Prompt', sans-serif;
+            background-color: #f8fafc;
+        }
+        .font-prompt {
+            font-family: 'Prompt', sans-serif;
+        }
+        /* Custom radio button visual card selection styling */
+        .doc-type-card {
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .doc-type-card:hover {
+            transform: translateY(-2px);
+        }
+        input[type="radio"]:checked + label {
+            border-color: #0284c7;
+            background-color: #f0f9ff;
+            box-shadow: 0 4px 6px -1px rgba(2, 132, 199, 0.15), 0 2px 4px -1px rgba(2, 132, 199, 0.1);
+        }
+        input[type="radio"]:checked + label .check-icon {
+            display: flex;
+        }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen pb-12">
+
+    <!-- Navigation Bar -->
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20 items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-2xl bg-primary-600 flex items-center justify-center text-white text-2xl shadow-md">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl sm:text-2xl font-bold font-prompt text-slate-900 leading-tight">ระบบ AI ช่วยงานครู</h1>
+                        <p class="text-xs sm:text-sm text-slate-500 font-medium">ทำเอกสาร เติมแบบฟอร์ม และบันทึกบัญชีอัตโนมัติ</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="hidden sm:flex flex-col text-right">
+                        <span class="text-sm font-semibold text-slate-800">คุณครูสมศรี ใจดี</span>
+                        <span class="text-xs text-slate-500">โรงเรียนเรียนดีวิทยา</span>
+                    </div>
+                    <div class="w-10 h-10 rounded-full bg-slate-100 border-2 border-primary-500 flex items-center justify-center text-primary-700 font-bold text-lg">
+                        ส
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+        
+        <!-- Welcome Banner -->
+        <div class="bg-gradient-to-r from-primary-600 to-sky-700 text-white rounded-3xl p-6 sm:p-8 mb-8 shadow-lg relative overflow-hidden">
+            <div class="relative z-10 max-w-2xl">
+                <span class="inline-block bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold mb-3">
+                    ✨ ใช้งานง่าย ไม่ซับซ้อน
+                </span>
+                <h2 class="text-2xl sm:text-3xl font-bold font-prompt mb-2">ให้อัปโหลดเอกสารแล้วปล่อยให้ AI ทำงานแทนคุณครูได้เลยค่ะ</h2>
+                <p class="text-sky-100 text-base sm:text-lg">เพียงเลือกบริการที่ต้องการ และส่งไฟล์หรือถ่ายรูป คุณครูสามารถปิดหน้านี้ไปพักผ่อนได้ทันที</p>
+            </div>
+            <i class="fa-solid fa-file-invoice text-white/10 text-9xl absolute -bottom-6 -right-6 pointer-events-none"></i>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <!-- Left & Middle Column: Upload Form (Spans 2 columns on desktop) -->
+            <div class="lg:col-span-2 space-y-6">
+                
+                <form id="uploadForm" class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-8">
+                    
+                    <!-- Step 1: Select Type -->
+                    <div>
+                        <div class="flex items-center gap-3 mb-4">
+                            <span class="w-8 h-8 rounded-full bg-primary-100 text-primary-700 font-bold flex items-center justify-center text-lg">1</span>
+                            <h3 class="text-xl font-bold font-prompt text-slate-900">ให้ AI ช่วยทำอะไรดีคะ? (เลือก 1 อย่าง)</h3>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            
+                            <!-- Mode 1: Fill Template -->
+                            <div class="relative">
+                                <input type="radio" id="radioTemplate" name="docType" value="template" class="hidden" checked>
+                                <label for="radioTemplate" class="doc-type-card block h-full p-5 rounded-2xl border-2 border-slate-200 bg-white">
+                                    <div class="flex justify-between items-start mb-3">
+                                        <div class="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-2xl">
+                                            <i class="fa-solid fa-file-signature"></i>
+                                        </div>
+                                        <div class="check-icon hidden w-6 h-6 rounded-full bg-primary-600 text-white items-center justify-center text-xs">
+                                            <i class="fa-solid fa-check"></i>
+                                        </div>
+                                    </div>
+                                    <h4 class="font-bold text-slate-900 font-prompt text-base mb-1">1) เติมข้อมูลลงแบบฟอร์ม</h4>
+                                    <p class="text-xs text-slate-500 leading-relaxed">อัปโหลดโครงเอกสาร (PDF/Doc) แล้วให้ AI ช่วยกรอกข้อมูลให้สมบูรณ์</p>
+                                </label>
+                            </div>
+
+                            <!-- Mode 2: OCR & Summary -->
+                            <div class="relative">
+                                <input type="radio" id="radioOCR" name="docType" value="ocr" class="hidden">
+                                <label for="radioOCR" class="doc-type-card block h-full p-5 rounded-2xl border-2 border-slate-200 bg-white">
+                                    <div class="flex justify-between items-start mb-3">
+                                        <div class="w-12 h-12 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center text-2xl">
+                                            <i class="fa-solid fa-camera-retro"></i>
+                                        </div>
+                                        <div class="check-icon hidden w-6 h-6 rounded-full bg-primary-600 text-white items-center justify-center text-xs">
+                                            <i class="fa-solid fa-check"></i>
+                                        </div>
+                                    </div>
+                                    <h4 class="font-bold text-slate-900 font-prompt text-base mb-1">2) แปลงรูปถ่ายเป็นเอกสาร</h4>
+                                    <p class="text-xs text-slate-500 leading-relaxed">ถ่ายรูปกระดาษ โน้ตสั่งงาน หรือกระดาน ให้ AI เรียบเรียงเป็นไฟล์พิมพ์</p>
+                                </label>
+                            </div>
+
+                            <!-- Mode 3: AI Accounting -->
+                            <div class="relative">
+                                <input type="radio" id="radioAccounting" name="docType" value="accounting" class="hidden">
+                                <label for="radioAccounting" class="doc-type-card block h-full p-5 rounded-2xl border-2 border-slate-200 bg-white">
+                                    <div class="flex justify-between items-start mb-3">
+                                        <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-2xl">
+                                            <i class="fa-solid fa-calculator"></i>
+                                        </div>
+                                        <div class="check-icon hidden w-6 h-6 rounded-full bg-primary-600 text-white items-center justify-center text-xs">
+                                            <i class="fa-solid fa-check"></i>
+                                        </div>
+                                    </div>
+                                    <h4 class="font-bold text-slate-900 font-prompt text-base mb-1">3) ให้ AI ช่วยทำบัญชี</h4>
+                                    <p class="text-xs text-slate-500 leading-relaxed">ส่งใบเสร็จ สลิป หรือบิลเงินสด AI จะช่วยสรุปยอดและทำตารางรายงานให้</p>
+                                </label>
+                            </div>
+
+                        </div>
+
+                        <!-- Dynamic Context Note -->
+                        <div id="docTypeNote" class="mt-4 p-4 rounded-xl bg-sky-50 border border-sky-100 text-sky-800 text-sm flex items-start gap-3 transition-colors duration-300">
+                            <i id="docTypeNoteIcon" class="fa-solid fa-circle-info text-sky-600 text-xl mt-0.5 transition-colors duration-300"></i>
+                            <span id="docTypeNoteText" class="text-base font-medium">ระบบจะนำไฟล์แบบฟอร์มของคุณครูมาวิเคราะห์และกรอกข้อมูลที่จำเป็นให้อย่างถูกต้องตามโครงสร้าง</span>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Upload Files -->
+                    <div>
+                        <div class="flex items-center gap-3 mb-4">
+                            <span class="w-8 h-8 rounded-full bg-primary-100 text-primary-700 font-bold flex items-center justify-center text-lg">2</span>
+                            <h3 class="text-xl font-bold font-prompt text-slate-900">อัปโหลดเอกสารที่ต้องใช้</h3>
+                        </div>
+
+                        <!-- Dynamic Requirement Box (Tells teacher EXACTLY what to upload) -->
+                        <div id="requirementBox" class="mb-5 p-5 rounded-2xl bg-blue-50 border-2 border-blue-200 flex items-start gap-4 shadow-inner transition-all duration-300">
+                            <div id="reqIconWrapper" class="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 text-2xl transition-colors duration-300">
+                                <i id="reqIcon" class="fa-solid fa-file-word"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold font-prompt text-slate-900 text-lg mb-1">สิ่งที่คุณครูต้องใช้ในโหมดนี้:</h4>
+                                <p id="reqText" class="text-slate-700 text-base leading-relaxed">
+                                    ไฟล์โครงสร้างเอกสาร (เช่น Word, PDF) ที่เป็นแบบฟอร์มเปล่า หรือพิมพ์ข้อมูลไว้บางส่วนแล้ว
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Big Accessible Dropzone -->
+                        <div id="uploadZone" class="border-4 border-dashed border-slate-300 rounded-3xl p-6 sm:p-10 text-center hover:border-primary-500 bg-slate-50 hover:bg-primary-50/50 transition-all cursor-pointer group">
+                            <input type="file" id="fileInput" multiple accept="image/*,.pdf,.doc,.docx" class="hidden">
+                            <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden">
+
+                            <div class="max-w-md mx-auto space-y-6">
+                                <div class="w-24 h-24 bg-white rounded-full mx-auto flex items-center justify-center shadow-md text-primary-600 text-4xl group-hover:scale-110 transition-transform duration-300">
+                                    <i class="fa-solid fa-hand-pointer"></i>
+                                </div>
+                                <div>
+                                    <p class="text-2xl font-bold font-prompt text-slate-800 mb-2">แตะตรงนี้เพื่อส่งเอกสารค่ะ</p>
+                                    <p class="text-base text-slate-500">คุณครูสามารถเลือกไฟล์จากเครื่อง หรือจะใช้มือถือถ่ายรูปใหม่เลยก็ได้ค่ะ</p>
+                                </div>
+
+                                <div class="pt-4 flex flex-col sm:flex-row gap-4 justify-center">
+                                    <button type="button" id="browseBtn" class="flex-1 bg-white border-2 border-primary-500 text-primary-700 hover:bg-primary-50 font-bold py-4 px-6 rounded-2xl transition-colors shadow-sm text-lg flex items-center justify-center gap-2">
+                                        <i class="fa-solid fa-folder-open"></i> เลือกไฟล์
+                                    </button>
+                                    <button type="button" id="btnCamera" class="flex-1 bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 px-6 rounded-2xl transition-colors shadow-md text-lg flex items-center justify-center gap-2">
+                                        <i class="fa-solid fa-camera"></i> ถ่ายรูปใหม่
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Selected File Preview Container -->
+                        <div id="filePreviewContainer" class="mt-4 hidden">
+                            <h4 class="text-sm font-semibold text-slate-700 mb-2 font-prompt">รายการไฟล์ที่เลือกไว้:</h4>
+                            <ul id="fileList" class="space-y-2"></ul>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Note to AI (Optional) -->
+                    <div>
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="w-8 h-8 rounded-full bg-primary-100 text-primary-700 font-bold flex items-center justify-center text-lg">3</span>
+                            <h3 class="text-xl font-bold font-prompt text-slate-900">คำสั่งเพิ่มเติมถึง AI <span class="text-sm font-normal text-slate-500">(ถ้ามี)</span></h3>
+                        </div>
+                        <textarea id="userNotes" rows="2" class="w-full p-4 rounded-2xl border border-slate-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-slate-700 text-base" placeholder="เช่น สรุปเป็นยอดรวมรายเดือนให้ด้วย, สรุปให้กระชับสำหรับรายงานผู้บริหาร..."></textarea>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div>
+                        <button type="submit" id="btnSubmit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-8 rounded-2xl transition-all shadow-lg hover:shadow-xl text-xl font-prompt flex items-center justify-center gap-3">
+                            <i class="fa-solid fa-paper-plane"></i>
+                            <span>ยืนยันส่งเอกสารให้ AI ทำงาน</span>
+                        </button>
+                    </div>
+
+                </form>
+
+            </div>
+
+            <!-- Right Column: Status & Recent Activity -->
+            <div class="space-y-6">
+                
+                <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+                    <h3 class="text-lg font-bold font-prompt text-slate-900 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-clock-rotate-left text-primary-600"></i>
+                        สถานะการประมวลผล AI
+                    </h3>
+
+                    <!-- Active Progress Item -->
+                    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-bold bg-amber-200 text-amber-800 px-2.5 py-1 rounded-full">กำลังดำเนินการ</span>
+                            <span class="text-xs text-slate-500">2 นาทีที่แล้ว</span>
+                        </div>
+                        <h4 class="font-bold text-slate-800 text-sm mb-1">บิลซื้ออุปกรณ์วิทย์_ต.ค.pdf</h4>
+                        <p class="text-xs text-slate-600 mb-3">โหมด: AI ช่วยทำบัญชี</p>
+                        
+                        <!-- Progress bar -->
+                        <div class="w-full bg-amber-200 rounded-full h-2 mb-1">
+                            <div class="bg-amber-500 h-2 rounded-full w-3/4 animate-pulse"></div>
+                        </div>
+                        <span class="text-xs text-amber-700 font-medium">กำลังอ่านยอดเงินและจำแนกหมวดหมู่... 75%</span>
+                    </div>
+
+                    <!-- Finished Items -->
+                    <div class="space-y-3">
+                        <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider font-prompt">งานที่เสร็จสิ้นแล้ว</h4>
+                        
+                        <!-- Done item 1 -->
+                        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 hover:bg-slate-100 transition-colors">
+                            <div class="flex items-center gap-3 overflow-hidden">
+                                <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                                    <i class="fa-solid fa-file-excel"></i>
+                                </div>
+                                <div class="truncate">
+                                    <p class="text-sm font-semibold text-slate-800 truncate">สรุปบัญชีโครงการสอน.xlsx</p>
+                                    <p class="text-xs text-slate-500">วันนี้ 09:30 น.</p>
+                                </div>
+                            </div>
+                            <button class="text-primary-600 hover:text-primary-700 font-bold text-xs shrink-0 px-2 py-1 rounded-lg bg-white border border-slate-200 shadow-sm">
+                                ดาวน์โหลด
+                            </button>
+                        </div>
+
+                        <!-- Done item 2 -->
+                        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 hover:bg-slate-100 transition-colors">
+                            <div class="flex items-center gap-3 overflow-hidden">
+                                <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                                    <i class="fa-solid fa-file-word"></i>
+                                </div>
+                                <div class="truncate">
+                                    <p class="text-sm font-semibold text-slate-800 truncate">บันทึกข้อความ_อนุมัติ.docx</p>
+                                    <p class="text-xs text-slate-500">เมื่อวานนี้</p>
+                                </div>
+                            </div>
+                            <button class="text-primary-600 hover:text-primary-700 font-bold text-xs shrink-0 px-2 py-1 rounded-lg bg-white border border-slate-200 shadow-sm">
+                                ดาวน์โหลด
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Help Box for Seniors -->
+                <div class="bg-sky-50 rounded-3xl p-6 border border-sky-200 text-sky-900">
+                    <div class="flex items-center gap-3 mb-2">
+                        <i class="fa-solid fa-headset text-2xl text-sky-600"></i>
+                        <h4 class="font-bold font-prompt text-base">ต้องการช่วยเหลือ?</h4>
+                    </div>
+                    <p class="text-sm text-sky-700 mb-3">หากติดขัดการใช้งาน สามารถโทรสอบถามฝ่ายไอทีโรงเรียนได้ตลอดเวลาค่ะ</p>
+                    <a href="tel:021234567" class="inline-flex items-center gap-2 text-sm font-bold text-primary-700 hover:underline">
+                        <i class="fa-solid fa-phone"></i> โทร 02-123-4567 (สายด่วน)
+                    </a>
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-8 text-center shadow-2xl space-y-6 transform transition-all">
+            <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-4xl mx-auto">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <div>
+                <h3 class="text-2xl font-bold font-prompt text-slate-900 mb-2">ส่งเอกสารเรียบร้อยแล้วค่ะ!</h3>
+                <p class="text-slate-600 text-base leading-relaxed">
+                    ระบบกำลังส่งไฟล์ให้ AI ทำการประมวลผล คุณครูสามารถปิดหน้าต่างนี้ หรือพักผ่อนได้เลย ระบบจะแจ้งเตือนเมื่อเสร็จสิ้นค่ะ
+                </p>
+            </div>
+            <button id="closeModalBtn" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 px-6 rounded-2xl transition-colors text-lg font-prompt">
+                รับทราบ และปิดหน้าต่าง
+            </button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Safe helper for getting elements
+            const getEl = (id) => document.getElementById(id);
+
+            const dropZone = getEl('uploadZone');
+            const fileInput = getEl('fileInput');
+            const cameraInput = getEl('cameraInput');
+            const browseBtn = getEl('browseBtn');
+            const btnCamera = getEl('btnCamera');
+            const fileList = getEl('fileList');
+            const filePreviewContainer = getEl('filePreviewContainer');
+            const uploadForm = getEl('uploadForm');
+            const btnSubmit = getEl('btnSubmit');
+            const successModal = getEl('successModal');
+            const closeModalBtn = getEl('closeModalBtn');
+            const docTypeNoteText = getEl('docTypeNoteText');
+            const docTypeNote = getEl('docTypeNote');
+            const docTypeNoteIcon = getEl('docTypeNoteIcon');
+            
+            // New UI Elements
+            const requirementBox = getEl('requirementBox');
+            const reqIconWrapper = getEl('reqIconWrapper');
+            const reqIcon = getEl('reqIcon');
+            const reqText = getEl('reqText');
+
+            let selectedFiles = [];
+
+            // Dynamic Description & UI Text based on mode selection
+            const uiStates = {
+                'template': {
+                    note: 'ระบบจะนำไฟล์แบบฟอร์มของคุณครูมาวิเคราะห์และกรอกข้อมูลที่จำเป็นให้อย่างถูกต้องตามโครงสร้าง',
+                    noteColor: 'bg-sky-50 border-sky-100 text-sky-800',
+                    noteIconColor: 'text-sky-600',
+                    reqBoxColor: 'bg-blue-50 border-blue-200',
+                    reqIconWrapper: 'bg-blue-100 text-blue-600',
+                    reqIcon: 'fa-file-word',
+                    reqText: 'ไฟล์แบบฟอร์ม (เช่น Word, PDF) ที่เป็นแบบฟอร์มเปล่า หรือแบบฟอร์มที่ต้องการให้ AI ช่วยเติมข้อมูลให้สมบูรณ์'
+                },
+                'ocr': {
+                    note: 'ระบบจะอ่านข้อความจากรูปถ่ายกระดาษ หรือข้อความลายมือบนกระดาน แล้วแปลงเป็นไฟล์พิมพ์ให้อย่างเป็นระเบียบ',
+                    noteColor: 'bg-purple-50 border-purple-100 text-purple-800',
+                    noteIconColor: 'text-purple-600',
+                    reqBoxColor: 'bg-purple-50 border-purple-200',
+                    reqIconWrapper: 'bg-purple-100 text-purple-600',
+                    reqIcon: 'fa-camera-retro',
+                    reqText: '<span class="font-bold text-purple-800">รูปถ่ายตัวหนังสือ</span> เช่น รูปถ่ายหน้าหนังสือ รูปกระดาษที่จดงานไว้ หรือรูปถ่ายข้อความบนกระดานดำ/ไวท์บอร์ด'
+                },
+                'accounting': {
+                    note: 'ระบบจะดึงข้อมูล ยอดเงิน วันที่ และรายการ จากใบเสร็จเพื่อสรุปเป็นรายงานบัญชีให้คุณครูทันที',
+                    noteColor: 'bg-emerald-50 border-emerald-100 text-emerald-800',
+                    noteIconColor: 'text-emerald-600',
+                    reqBoxColor: 'bg-emerald-50 border-emerald-200',
+                    reqIconWrapper: 'bg-emerald-100 text-emerald-600',
+                    reqIcon: 'fa-receipt',
+                    reqText: '<span class="font-bold text-emerald-800">รูปถ่ายหลักฐานการเงิน</span> เช่น รูปถ่ายใบเสร็จรับเงิน, สลิปโอนเงินธนาคาร, หรือบิลเงินสดต่างๆ'
+                }
+            };
+
+            const radioButtons = document.querySelectorAll('input[name="docType"]');
+            
+            function updateUIForMode(mode) {
+                const state = uiStates[mode];
+                if (state) {
+                    // Update Note
+                    if (docTypeNoteText) docTypeNoteText.textContent = state.note;
+                    if (docTypeNote) docTypeNote.className = `mt-4 p-4 rounded-xl border text-sm flex items-start gap-3 transition-colors duration-300 ${state.noteColor}`;
+                    if (docTypeNoteIcon) docTypeNoteIcon.className = `fa-solid fa-circle-info text-xl mt-0.5 transition-colors duration-300 ${state.noteIconColor}`;
+
+                    // Update Requirement Box for Step 2
+                    if (requirementBox) requirementBox.className = `mb-5 p-5 rounded-2xl border-2 flex items-start gap-4 shadow-inner transition-all duration-300 ${state.reqBoxColor}`;
+                    if (reqIconWrapper) reqIconWrapper.className = `w-12 h-12 rounded-full flex items-center justify-center shrink-0 text-2xl transition-colors duration-300 ${state.reqIconWrapper}`;
+                    if (reqIcon) reqIcon.className = `fa-solid ${state.reqIcon}`;
+                    if (reqText) reqText.innerHTML = state.reqText;
+                }
+            }
+
+            // Listen for changes on radio buttons
+            radioButtons.forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    updateUIForMode(e.target.value);
+                });
+            });
+
+            // Set initial state on page load
+            const checkedRadio = document.querySelector('input[name="docType"]:checked');
+            if (checkedRadio) {
+                updateUIForMode(checkedRadio.value);
+            }
+
+            // Drag and Drop safely
+            if (dropZone) {
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    dropZone.addEventListener(eventName, (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }, false);
+                });
+
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    dropZone.addEventListener(eventName, () => {
+                        dropZone.classList.add('border-primary-500', 'bg-primary-50');
+                    }, false);
+                });
+
+                ['dragleave', 'drop'].forEach(eventName => {
+                    dropZone.addEventListener(eventName, () => {
+                        dropZone.classList.remove('border-primary-500', 'bg-primary-50');
+                    }, false);
+                });
+
+                dropZone.addEventListener('drop', (e) => {
+                    const dt = e.dataTransfer;
+                    if (dt && dt.files) {
+                        handleFiles(dt.files);
+                    }
+                }, false);
+
+                // Clicking dropzone opens standard browser file selection
+                dropZone.addEventListener('click', (e) => {
+                    if (e.target !== browseBtn && e.target !== btnCamera && !btnCamera.contains(e.target) && !browseBtn.contains(e.target)) {
+                        if (fileInput) fileInput.click();
+                    }
+                });
+            }
+
+            if (browseBtn && fileInput) {
+                browseBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    fileInput.click();
+                });
+
+                fileInput.addEventListener('change', function() {
+                    handleFiles(this.files);
+                });
+            }
+
+            if (btnCamera && cameraInput) {
+                btnCamera.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    cameraInput.click();
+                });
+
+                cameraInput.addEventListener('change', function() {
+                    handleFiles(this.files);
+                });
+            }
+
+            function handleFiles(files) {
+                if (!files || files.length === 0) return;
+                selectedFiles = [...selectedFiles, ...Array.from(files)];
+                updateFilePreview();
+            }
+
+            function updateFilePreview() {
+                if (!fileList || !filePreviewContainer) return;
+                
+                fileList.innerHTML = '';
+                if (selectedFiles.length > 0) {
+                    filePreviewContainer.classList.remove('hidden');
+                    selectedFiles.forEach((file, index) => {
+                        const li = document.createElement('li');
+                        li.className = 'flex items-center justify-between p-3.5 bg-slate-50 border border-slate-200 rounded-2xl shadow-sm';
+                        
+                        const isImage = file.type.startsWith('image/');
+                        const iconClass = isImage ? 'fa-file-image text-blue-500' : 'fa-file-pdf text-red-500';
+                        
+                        li.innerHTML = `
+                            <div class="flex items-center gap-3 overflow-hidden">
+                                <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center shrink-0 border border-slate-200">
+                                    <i class="fa-solid ${iconClass} text-xl"></i>
+                                </div>
+                                <div class="truncate">
+                                    <p class="text-sm font-semibold text-slate-800 truncate">${file.name}</p>
+                                    <p class="text-xs text-slate-500">${(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                                </div>
+                            </div>
+                            <button type="button" class="text-slate-400 hover:text-red-500 p-2 transition-colors rounded-lg" onclick="removeFile(${index})">
+                                <i class="fa-solid fa-trash-can text-lg"></i>
+                            </button>
+                        `;
+                        fileList.appendChild(li);
+                    });
+                } else {
+                    filePreviewContainer.classList.add('hidden');
+                }
+            }
+
+            window.removeFile = function(index) {
+                selectedFiles.splice(index, 1);
+                updateFilePreview();
+                if (selectedFiles.length === 0 && fileInput) {
+                    fileInput.value = '';
+                }
+            };
+
+            if (uploadForm) {
+                uploadForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    
+                    if (selectedFiles.length === 0) {
+                        const originalContent = btnSubmit.innerHTML;
+                        btnSubmit.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> กรุณาเลือกไฟล์หรือถ่ายรูปก่อนค่ะ';
+                        btnSubmit.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
+                        btnSubmit.classList.add('bg-rose-600', 'hover:bg-rose-700');
+                        
+                        setTimeout(() => {
+                            btnSubmit.innerHTML = originalContent;
+                            btnSubmit.classList.remove('bg-rose-600', 'hover:bg-rose-700');
+                            btnSubmit.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+                        }, 2500);
+                        return;
+                    }
+
+                    // Simulate processing action
+                    const originalContent = btnSubmit.innerHTML;
+                    btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังส่งเอกสารไปให้ AI...';
+                    btnSubmit.disabled = true;
+                    btnSubmit.classList.add('opacity-75', 'cursor-not-allowed');
+
+                    setTimeout(() => {
+                        if (successModal) {
+                            successModal.classList.remove('hidden');
+                            successModal.classList.add('flex');
+                        }
+                        
+                        // Reset Form UI
+                        btnSubmit.innerHTML = originalContent;
+                        btnSubmit.disabled = false;
+                        btnSubmit.classList.remove('opacity-75', 'cursor-not-allowed');
+                        selectedFiles = [];
+                        updateFilePreview();
+                        if (fileInput) fileInput.value = '';
+                        if (cameraInput) cameraInput.value = '';
+                        const notesInput = getEl('userNotes');
+                        if (notesInput) notesInput.value = '';
+
+                    }, 1200);
+                });
+            }
+
+            if (closeModalBtn && successModal) {
+                closeModalBtn.addEventListener('click', () => {
+                    successModal.classList.add('hidden');
+                    successModal.classList.remove('flex');
+                });
+            }
+        });
+    </script>
+</body>
+</html>
