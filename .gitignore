@@ -6,7 +6,6 @@ dist-prototype
 
 .env
 .env.*
-!.env.example
 
 .DS_Store
 *.log
@@ -17,3 +16,6 @@ yarn-error.log*
 !.vscode/extensions.json
 .idea
 *.tsbuildinfo
+.vercel
+.env*
+!.env.example

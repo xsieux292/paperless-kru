@@ -8,6 +8,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "build:prototype": "vite build --config vite.config.prototype.ts && node scripts/inline-prototype.mjs",
+    "build:all": "npm run build && npm run build:prototype && node scripts/copy-prototype-to-dist.mjs",
     "preview": "vite preview",
     "lint": "eslint . --max-warnings 0",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",

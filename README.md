@@ -6,6 +6,18 @@
 ปรับดีไซน์ทั้งระบบตาม `archive/new UX,UI/plan.md` พร้อมข้อมูลจำลอง (mock) ที่ใช้งานได้จริงทั้งระบบ
 และชั้น API ที่เตรียมไว้ให้สลับไปต่อ backend จริงได้โดยไม่ต้องแก้ UI
 
+## เปิดดูออนไลน์ได้เลย (deploy บน Vercel แล้ว)
+
+| อะไร | ลิงก์ |
+| --- | --- |
+| **ระบบเว็บ** | https://paperless-kru.vercel.app/ |
+| **Prototype LINE OA** | https://paperless-kru.vercel.app/line-demo.html |
+| **ไฟล์เดียวสำหรับนำเสนอออฟไลน์** | https://paperless-kru.vercel.app/kruassist-line-prototype.html *(กด save เก็บไว้เปิดโดยไม่ต้องมีเน็ตได้)* |
+
+deploy ใหม่ด้วย `npx vercel deploy --prod` (Vercel จะรัน `npm run build:all` ให้เอง)
+
+---
+
 ## 2 หน้าเว็บในโปรเจกต์นี้
 
 | หน้า | URL | ใช้ทำอะไร |
