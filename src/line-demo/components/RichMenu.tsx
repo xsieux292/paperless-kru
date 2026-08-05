@@ -1,15 +1,15 @@
 import {
   BarChart3,
-  ChevronDown,
-  ChevronUp,
   Calendar,
   Camera,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
+  CircleHelp,
   FileText,
   FolderOpen,
   PenLine,
-  Sparkles,
   Trophy,
   Wallet,
   type LucideIcon,
@@ -26,26 +26,30 @@ import type { FlowId } from '../journey';
  *   - ช่องขวาล่าง = ปุ่มสลับแท็บ มีลูกศร ◀ ▶
  *   - เส้นแบ่งช่องหนา 3px เพื่อสื่อว่าแตะได้เป็นช่อง ๆ
  *   - ④ ทุกช่องมีไอคอน + ข้อความ ห้ามไอคอนเดี่ยว
+ *
+ * ทุกช่องในแท็บ A ใช้งานได้จริงทั้งหมด (ครบเท่าหน้าเว็บ)
  */
 
 interface Cell {
   icon: LucideIcon;
   label: string;
-  /** ช่องเด่น = พื้นทึบเข้ม */
   featured?: boolean;
-  /** จำนวนงานค้าง แสดงเป็นจุดส้ม + ตัวเลข */
   badge?: number;
   onTap?: () => void;
 }
 
 export interface RichMenuProps {
-  tab: FlowId;
+  tab: 'docdone' | 'teachgrow';
   onSwitchTab: (tab: FlowId) => void;
   onTapCamera: () => void;
+  onTapUpload: () => void;
+  onTapPendingSign: () => void;
+  onTapRequisition: () => void;
+  onTapJobs: () => void;
+  onTapHowTo: () => void;
   onTapPortfolio: () => void;
   onTapUnavailable: (label: string) => void;
   pendingSignatures: number;
-  /** พับเมนูเก็บเหมือนใน LINE จริง เพื่อให้เห็นการ์ดในแชทได้เต็ม ๆ */
   collapsed: boolean;
   onToggleCollapsed: () => void;
 }
@@ -54,6 +58,11 @@ export function RichMenu({
   tab,
   onSwitchTab,
   onTapCamera,
+  onTapUpload,
+  onTapPendingSign,
+  onTapRequisition,
+  onTapJobs,
+  onTapHowTo,
   onTapPortfolio,
   onTapUnavailable,
   pendingSignatures,
@@ -62,23 +71,18 @@ export function RichMenu({
 }: RichMenuProps) {
   const docDoneCells: Cell[] = [
     { icon: Camera, label: 'ถ่ายใบเสร็จ', featured: true, onTap: onTapCamera },
-    { icon: FileText, label: 'เบิกงบ / พัสดุ', onTap: () => onTapUnavailable('เบิกงบ / พัสดุ') },
-    {
-      icon: PenLine,
-      label: 'รอฉันเซ็น',
-      badge: pendingSignatures,
-      onTap: () => onTapUnavailable('รอฉันเซ็น'),
-    },
-    { icon: FolderOpen, label: 'เอกสารของฉัน', onTap: () => onTapUnavailable('เอกสารของฉัน') },
-    { icon: Wallet, label: 'สรุปงบ', onTap: () => onTapUnavailable('สรุปงบ') },
+    { icon: FileText, label: 'ส่งเอกสารให้ AI', onTap: onTapUpload },
+    { icon: PenLine, label: 'รอฉันเซ็น', badge: pendingSignatures, onTap: onTapPendingSign },
+    { icon: Wallet, label: 'เบิกงบ / ยืมพัสดุ', onTap: onTapRequisition },
+    { icon: FolderOpen, label: 'งานของฉัน', onTap: onTapJobs },
   ];
 
   const teachGrowCells: Cell[] = [
-    { icon: Calendar, label: 'แผนการสอน', featured: true, onTap: () => onTapUnavailable('แผนการสอน') },
+    { icon: FolderOpen, label: 'แฟ้ม ว.PA', featured: true, onTap: onTapPortfolio },
+    { icon: Calendar, label: 'แผนการสอน', onTap: () => onTapUnavailable('แผนการสอน') },
     { icon: Trophy, label: 'งานแข่ง / อบรม', onTap: () => onTapUnavailable('งานแข่ง / อบรม') },
     { icon: BarChart3, label: 'ผลนักเรียน', onTap: () => onTapUnavailable('ผลนักเรียน') },
-    { icon: FolderOpen, label: 'แฟ้ม ว.PA', onTap: onTapPortfolio },
-    { icon: Sparkles, label: 'ถาม AI', onTap: () => onTapUnavailable('ถาม AI') },
+    { icon: CircleHelp, label: 'วิธีใช้งาน', onTap: onTapHowTo },
   ];
 
   const cells = tab === 'docdone' ? docDoneCells : teachGrowCells;
@@ -118,6 +122,7 @@ export function RichMenu({
         <ChevronDown className="h-4 w-4" aria-hidden />
         พับเมนูเก็บ
       </button>
+
       {/* อัตราส่วน 2500:1686 ของ Rich Menu จริง */}
       <div className="grid aspect-[2500/1686] grid-cols-3 grid-rows-2 gap-[3px]">
         {cells.map((cell) => (
@@ -138,7 +143,7 @@ export function RichMenu({
           <span className="flex items-center gap-1 text-[11px] font-bold leading-tight">
             {isDocDone ? (
               <>
-                Teach & Grow <ChevronRight className="h-3.5 w-3.5" aria-hidden />
+                Teach &amp; Grow <ChevronRight className="h-3.5 w-3.5" aria-hidden />
               </>
             ) : (
               <>
