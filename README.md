@@ -13,6 +13,20 @@
 | **ระบบจริง** | `/` | เว็บที่คุณครูใช้งานจริง — ส่งเอกสารให้ AI และเบิกงบ/ยืมพัสดุ |
 | **Prototype LINE OA** | `/line-demo.html` | จำลอง user journey บน LINE OA ไว้นำเสนอ (ไม่ได้ต่อ LINE จริง) |
 
+### เอา prototype ไปนำเสนอ (ไม่ต้องมีเน็ต ไม่ต้องมีเซิร์ฟเวอร์)
+
+```bash
+npm run build:prototype
+```
+
+ได้ไฟล์เดียวที่ `dist-prototype/kruassist-line-prototype.html` — ดับเบิลคลิกเปิดได้เลย
+ก๊อปใส่ USB / แนบอีเมล / เปิดบนโน้ตบุ๊กเครื่องไหนก็ได้ (JS กับ CSS ถูกรวมไว้ในไฟล์แล้ว)
+
+> **อย่าเปิด `line-demo.html` ที่อยู่ใน repo ตรง ๆ** ไฟล์นั้นชี้ไปที่ `src/line-demo/main.tsx`
+> ซึ่งต้องมี Vite คอยแปลงให้ ถ้าเปิดโดยไม่ผ่าน `npm run dev` เบราว์เซอร์จะขึ้น
+> `Failed to load module script ... MIME type of "application/octet-stream"`
+> — ให้ใช้ `npm run dev` (ตอนพัฒนา) หรือไฟล์จาก `npm run build:prototype` (ตอนนำเสนอ)
+
 ### หน้า "ระบบจริง" มี 2 เมนู (กลุ่ม Doc Done)
 
 **1. ส่งเอกสารให้ AI** — เลือกได้ 3 บริการ
@@ -46,7 +60,8 @@ npm run dev
 | คำสั่ง | ใช้ทำอะไร |
 | --- | --- |
 | `npm run dev` | รันโหมดพัฒนา (hot reload) — ระบบจริงที่ `/` และ prototype ที่ `/line-demo.html` |
-| `npm run build` | สร้างไฟล์สำหรับ production ไปที่ `dist/` |
+| `npm run build` | สร้างไฟล์สำหรับ production ไปที่ `dist/` (path แบบสัมพัทธ์ วางในโฟลเดอร์ย่อยได้) |
+| `npm run build:prototype` | รวม prototype LINE OA เป็นไฟล์ HTML ไฟล์เดียวสำหรับนำเสนอ |
 | `npm run preview` | ทดสอบไฟล์ที่ build แล้ว |
 | `npm run typecheck` | ตรวจ type ทั้งโปรเจกต์ |
 | `npm run lint` | ตรวจ ESLint |

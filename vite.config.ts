@@ -6,6 +6,12 @@ const resolvePath = (relative: string) => fileURLToPath(new URL(relative, import
 
 export default defineConfig({
   plugins: [react()],
+  /**
+   * ใช้ path แบบสัมพัทธ์ เพื่อให้ dist/ เปิดได้จากทุกที่
+   * (โฟลเดอร์ย่อย, GitHub Pages ของ repo, หรือเปิดจากเครื่องตรง ๆ)
+   * ถ้าใช้ '/' ไฟล์ asset จะถูกอ้างเป็น /assets/... ซึ่งพังทันทีเมื่อ deploy ไม่ได้อยู่ที่ root
+   */
+  base: './',
   resolve: {
     alias: {
       '@': resolvePath('./src'),

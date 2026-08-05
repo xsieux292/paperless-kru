@@ -9,6 +9,15 @@ export default [
   // archive/ และ legacy/ เป็นเอกสารอ้างอิง ไม่ใช่ซอร์สของระบบ
   { ignores: ['dist', 'legacy', 'archive', 'node_modules'] },
   js.configs.recommended,
+  // สคริปต์ build รันบน Node ไม่ใช่เบราว์เซอร์ จึงใช้ global คนละชุด
+  {
+    files: ['scripts/**/*.mjs', '*.config.js'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'module',
+      globals: globals.node,
+    },
+  },
   {
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
