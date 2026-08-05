@@ -6,17 +6,24 @@ import { WelcomeBanner } from '@/components/layout/WelcomeBanner';
 import { HowToUseModal } from '@/features/help/HowToUseModal';
 import { JobStatusPanel } from '@/features/jobs/JobStatusPanel';
 import { UploadForm } from '@/features/upload/UploadForm';
+import type { AppRoute } from '@/routes';
 
 /** หน้าหลักของระบบ — โครงเหมือน HTML เดิม: ฟอร์ม 2 คอลัมน์ + แผงสถานะด้านขวา */
-export function UploadPortalPage() {
+export function UploadPortalPage({
+  route,
+  onNavigate,
+}: {
+  route: AppRoute;
+  onNavigate: (route: AppRoute) => void;
+}) {
   const [helpOpen, setHelpOpen] = useState(false);
 
   return (
-    <div className="min-h-screen pb-28 lg:pb-12">
+    <div className="min-h-screen bg-surface pb-28 lg:pb-12">
       <MockModeBanner />
-      <AppHeader onOpenHelp={() => setHelpOpen(true)} />
+      <AppHeader route={route} onNavigate={onNavigate} onOpenHelp={() => setHelpOpen(true)} />
 
-      <main className="mx-auto mt-8 max-w-7xl px-4 sm:px-6 lg:px-8">
+      <main className="mx-auto mt-6 max-w-7xl px-4 sm:px-6 lg:px-8">
         <WelcomeBanner />
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">

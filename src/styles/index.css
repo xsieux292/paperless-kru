@@ -15,7 +15,7 @@
   }
 
   body {
-    @apply bg-slate-50 font-sans text-slate-800 antialiased;
+    @apply bg-surface font-sans text-base text-ink antialiased;
   }
 
   /* โฟกัสชัดเจนสำหรับผู้ใช้คีย์บอร์ด */
@@ -37,18 +37,17 @@
 }
 
 @layer components {
-  /* พื้นที่แตะขั้นต่ำ 44px ตามแนวทาง accessibility */
+  /* พื้นที่กดได้ ≥48×48px ทุกจุด (plan ข้อ 6) */
   .tap-target {
-    @apply min-h-[44px] min-w-[44px];
+    @apply min-h-tap min-w-tap;
   }
 
   .card {
-    @apply rounded-3xl border border-slate-200 bg-white shadow-sm;
+    @apply rounded-2xl border border-slate-200 bg-white shadow-sm;
   }
-}
 
-@layer utilities {
-  .scrollbar-thin {
-    scrollbar-width: thin;
+  /* ⑤ ส้ม = "ตรงนี้รอคุณอยู่" ใช้กับช่อง/รายการที่ครูต้องลงมือเท่านั้น */
+  .needs-you {
+    @apply border-2 border-attention-500 bg-attention-50;
   }
 }

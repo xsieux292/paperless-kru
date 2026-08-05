@@ -15,21 +15,22 @@ import {
 
 const VARIANT_STYLES: Record<ToastVariant, { box: string; icon: typeof Info; iconColor: string }> = {
   success: {
-    box: 'bg-emerald-50 border-emerald-300 text-emerald-900',
+    box: 'bg-primary-50 border-primary-500 text-ink',
     icon: CheckCircle2,
-    iconColor: 'text-emerald-600',
+    iconColor: 'text-primary-600',
   },
   error: {
-    box: 'bg-rose-50 border-rose-300 text-rose-900',
+    box: 'bg-danger-50 border-danger-500 text-ink',
     icon: XCircle,
-    iconColor: 'text-rose-600',
+    iconColor: 'text-danger-600',
   },
+  /** ส้ม = ตรงนี้รอคุณอยู่ / ต้องแก้ */
   warning: {
-    box: 'bg-amber-50 border-amber-300 text-amber-900',
+    box: 'bg-attention-50 border-attention-500 text-ink',
     icon: AlertTriangle,
-    iconColor: 'text-amber-600',
+    iconColor: 'text-attention-600',
   },
-  info: { box: 'bg-sky-50 border-sky-300 text-sky-900', icon: Info, iconColor: 'text-sky-600' },
+  info: { box: 'bg-white border-slate-300 text-ink', icon: Info, iconColor: 'text-ink-light' },
 };
 
 const AUTO_DISMISS_MS = 6000;
@@ -77,13 +78,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             <div
               key={toast.id}
               className={cn(
-                'pointer-events-auto flex w-full max-w-lg animate-slide-up items-start gap-3 rounded-2xl border-2 p-4 shadow-lg',
+                'pointer-events-auto flex w-full max-w-lg animate-slide-up items-start gap-3 rounded-xl border-2 p-4 shadow-lg',
                 style.box,
               )}
             >
               <Icon className={cn('mt-0.5 h-6 w-6 shrink-0', style.iconColor)} aria-hidden />
               <div className="min-w-0 flex-1">
-                <p className="font-prompt text-base font-bold">{toast.title}</p>
+                <p className="font-display text-base font-bold">{toast.title}</p>
                 {toast.description && (
                   <p className="mt-0.5 text-sm leading-relaxed opacity-90">{toast.description}</p>
                 )}

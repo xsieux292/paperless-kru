@@ -1,22 +1,28 @@
 import { useCallback, useRef, useState, type DragEvent } from 'react';
-import { Camera, FolderOpen, Hand } from 'lucide-react';
+import { Camera, FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import type { DocumentModeConfig } from '@/constants/documentModes';
 import { env } from '@/config/env';
 import { cn } from '@/lib/cn';
 
 export interface DropzoneProps {
+  mode: DocumentModeConfig;
   onFilesSelected: (files: File[]) => void;
-  /** ชนิดไฟล์ที่รับ เปลี่ยนตามโหมดที่เลือก */
-  accept: string;
+  /**
+   * ยังไม่ได้เลือกไฟล์เลยหรือไม่
+   * ถ้ายัง ปุ่มส่งไฟล์คือ "ปุ่มหลักของจอนี้" จึงเป็นปุ่มทึบ
+   * ถ้าเลือกแล้ว ปุ่มหลักย้ายไปเป็นปุ่มส่งด้านล่าง ตาม plan ข้อ ① (จอละ 1 ปุ่มทึบ)
+   */
+  isPrimaryAction: boolean;
   disabled?: boolean;
 }
 
 /**
  * พื้นที่ส่งไฟล์
- * ปรับจาก HTML เดิม: แยกปุ่ม "เลือกไฟล์" กับ "ถ่ายรูป" ให้เด่นเท่ากัน
- * และเพิ่มข้อความบอกข้อจำกัดไฟล์ไว้ล่วงหน้า เพื่อไม่ให้เจอ error ทีหลัง
+ * ป้ายปุ่มเขียนเป็น "กริยา + สิ่งของ" ตามบริการที่เลือก เช่น "ถ่ายรูปใบเสร็จ"
+ * และบอกข้อจำกัดไฟล์ไว้ล่วงหน้า เพื่อไม่ให้เจอปัญหาทีหลัง
  */
-export function Dropzone({ onFilesSelected, accept, disabled = false }: DropzoneProps) {
+export function Dropzone({ mode, onFilesSelected, isPrimaryAction, disabled = false }: DropzoneProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -42,6 +48,34 @@ export function Dropzone({ onFilesSelected, accept, disabled = false }: Dropzone
     if (!disabled) setIsDragging(dragging);
   };
 
+  const cameraButton = (
+    <Button
+      type="button"
+      variant={isPrimaryAction && mode.upload.preferCamera ? 'primary' : 'outline'}
+      size="lg"
+      fullWidth
+      disabled={disabled}
+      leftIcon={<Camera className="h-5 w-5" aria-hidden />}
+      onClick={() => cameraInputRef.current?.click()}
+    >
+      {mode.upload.cameraLabel}
+    </Button>
+  );
+
+  const fileButton = (
+    <Button
+      type="button"
+      variant={isPrimaryAction && !mode.upload.preferCamera ? 'primary' : 'outline'}
+      size="lg"
+      fullWidth
+      disabled={disabled}
+      leftIcon={<FolderOpen className="h-5 w-5" aria-hidden />}
+      onClick={() => fileInputRef.current?.click()}
+    >
+      {mode.upload.fileLabel}
+    </Button>
+  );
+
   return (
     <div
       onDragEnter={(event) => stopAndSet(event, true)}
@@ -49,18 +83,16 @@ export function Dropzone({ onFilesSelected, accept, disabled = false }: Dropzone
       onDragLeave={(event) => stopAndSet(event, false)}
       onDrop={onDrop}
       className={cn(
-        'rounded-3xl border-4 border-dashed p-6 text-center transition-all sm:p-10',
+        'rounded-2xl border-2 border-dashed p-5 transition-all sm:p-6',
         disabled && 'pointer-events-none opacity-60',
-        isDragging
-          ? 'border-primary-500 bg-primary-50'
-          : 'border-slate-300 bg-slate-50 hover:border-primary-400 hover:bg-primary-50/40',
+        isDragging ? 'border-primary-600 bg-primary-50' : 'border-slate-300 bg-white',
       )}
     >
       <input
         ref={fileInputRef}
         type="file"
         multiple
-        accept={accept}
+        accept={mode.accept}
         className="hidden"
         onChange={(event) => {
           handleFiles(event.target.files);
@@ -79,47 +111,25 @@ export function Dropzone({ onFilesSelected, accept, disabled = false }: Dropzone
         }}
       />
 
-      <div className="mx-auto max-w-md space-y-6">
-        <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-white text-primary-600 shadow-md">
-          <Hand className="h-10 w-10" aria-hidden />
-        </div>
+      <div className="mx-auto max-w-md space-y-3">
+        {mode.upload.preferCamera ? (
+          <>
+            {cameraButton}
+            {fileButton}
+          </>
+        ) : (
+          <>
+            {fileButton}
+            {cameraButton}
+          </>
+        )}
 
-        <div>
-          <p className="mb-2 font-prompt text-2xl font-bold text-slate-800">
-            เลือกวิธีส่งเอกสารได้เลยค่ะ
-          </p>
-          <p className="text-base text-slate-500">
-            กดปุ่มด้านล่าง หรือจะลากไฟล์มาวางตรงนี้ก็ได้ค่ะ
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-4 pt-2 sm:flex-row">
-          <Button
-            type="button"
-            variant="outline"
-            size="lg"
-            fullWidth
-            leftIcon={<FolderOpen className="h-6 w-6" aria-hidden />}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            เลือกไฟล์ในเครื่อง
-          </Button>
-
-          <Button
-            type="button"
-            variant="secondary"
-            size="lg"
-            fullWidth
-            leftIcon={<Camera className="h-6 w-6" aria-hidden />}
-            onClick={() => cameraInputRef.current?.click()}
-          >
-            ถ่ายรูปใหม่
-          </Button>
-        </div>
-
-        <p className="text-xs text-slate-400">
-          รองรับไฟล์รูปภาพ, PDF และ Word · ขนาดไม่เกิน {env.maxFileSizeMb} MB ต่อไฟล์ ·
-          ส่งได้ครั้งละไม่เกิน {env.maxFileCount} ไฟล์
+        <p className="pt-1 text-center text-sm text-ink-light">
+          หรือจะลากไฟล์มาวางในกรอบนี้ก็ได้ค่ะ
+        </p>
+        <p className="text-center text-sm text-ink-mute">
+          รับไฟล์รูปภาพ, PDF และ Word · ไม่เกิน {env.maxFileSizeMb} MB ต่อไฟล์ · ครั้งละไม่เกิน{' '}
+          {env.maxFileCount} ไฟล์
         </p>
       </div>
     </div>

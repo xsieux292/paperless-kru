@@ -11,7 +11,7 @@ export function FontSizeControl({ className }: { className?: string }) {
 
   return (
     <div className={cn('flex items-center gap-1.5', className)}>
-      <Type className="h-4 w-4 shrink-0 text-slate-400" aria-hidden />
+      <Type className="h-4 w-4 shrink-0 text-ink-mute" aria-hidden />
       <div
         role="radiogroup"
         aria-label="ปรับขนาดตัวอักษร"
@@ -26,10 +26,10 @@ export function FontSizeControl({ className }: { className?: string }) {
             title={option.hint}
             onClick={() => setFontScale(option.value)}
             className={cn(
-              'flex h-9 w-9 items-center justify-center rounded-lg font-prompt font-bold transition-all',
+              'flex h-9 w-9 items-center justify-center rounded-lg font-display font-bold transition-all',
               fontScale === option.value
                 ? 'bg-white text-primary-700 shadow-sm ring-2 ring-primary-500'
-                : 'text-slate-500 hover:bg-white/70',
+                : 'text-ink-light hover:bg-white/70',
             )}
             style={{ fontSize: `${0.8 + index * 0.2}rem` }}
           >

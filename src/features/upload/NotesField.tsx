@@ -12,7 +12,8 @@ const MAX_LENGTH = 500;
 
 /**
  * ช่องคำสั่งเพิ่มเติมถึง AI
- * ปรับจาก HTML เดิม: เพิ่มปุ่มคำสั่งสำเร็จรูปตามโหมด — คุณครูกดเลือกได้เลยโดยไม่ต้องคิดคำเอง
+ * มีปุ่มคำสั่งสำเร็จรูปตามบริการที่เลือก — ครูกดใส่ได้เลยโดยไม่ต้องคิดคำเอง
+ * (ครูหลายคนพิมพ์ช้า ตาม plan ข้อ 6 "Voice input" ช่องนี้ใช้แป้นพิมพ์เสียงของเครื่องได้ตามปกติ)
  */
 export function NotesField({ value, onChange, mode, disabled = false }: NotesFieldProps) {
   const appendSuggestion = (suggestion: string) => {
@@ -22,6 +23,8 @@ export function NotesField({ value, onChange, mode, disabled = false }: NotesFie
 
   return (
     <div className="space-y-3">
+      <p className="text-base text-ink-light">แตะเลือกคำสั่งที่ใช้บ่อยได้เลยค่ะ</p>
+
       <div className="flex flex-wrap gap-2">
         {mode.noteSuggestions.map((suggestion) => (
           <button
@@ -29,9 +32,9 @@ export function NotesField({ value, onChange, mode, disabled = false }: NotesFie
             type="button"
             disabled={disabled || value.includes(suggestion)}
             onClick={() => appendSuggestion(suggestion)}
-            className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 transition hover:border-primary-400 hover:bg-primary-50 hover:text-primary-800 disabled:cursor-not-allowed disabled:opacity-50"
+            className="tap-target inline-flex items-center gap-1.5 rounded-btn border border-slate-300 bg-white px-3 text-base text-ink transition hover:border-primary-500 hover:bg-primary-50 hover:text-primary-800 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <Plus className="h-3.5 w-3.5" aria-hidden />
+            <Plus className="h-4 w-4 shrink-0" aria-hidden />
             {suggestion}
           </button>
         ))}
@@ -49,9 +52,9 @@ export function NotesField({ value, onChange, mode, disabled = false }: NotesFie
           disabled={disabled}
           onChange={(event) => onChange(event.target.value)}
           placeholder="พิมพ์เพิ่มเองก็ได้ค่ะ เช่น สรุปเป็นยอดรวมรายเดือนให้ด้วย…"
-          className="w-full rounded-2xl border border-slate-300 p-4 text-base text-slate-700 transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500 disabled:bg-slate-50"
+          className="w-full rounded-xl border border-slate-300 p-4 text-base text-ink transition placeholder:text-ink-mute focus:border-primary-600 focus:ring-2 focus:ring-primary-500 disabled:bg-slate-50"
         />
-        <p className="mt-1 text-right text-xs text-slate-400">
+        <p className="mt-1 text-right text-sm text-ink-mute">
           {value.length}/{MAX_LENGTH} ตัวอักษร
         </p>
       </div>

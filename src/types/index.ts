@@ -19,6 +19,53 @@ export interface TeacherProfile {
   avatarUrl?: string | null;
 }
 
+/**
+ * แบบฟอร์มที่เคยอัปโหลดไว้แล้ว — ครูเลือกใช้ซ้ำได้โดยไม่ต้องอัปโหลดใหม่
+ * เป็นปัญหาที่เจอบ่อย เพราะโรงเรียนใช้แบบฟอร์มชุดเดิมทั้งปี
+ */
+export interface FormTemplate {
+  id: string;
+  name: string;
+  fileType: 'docx' | 'pdf' | 'xlsx';
+  /** หมวดของแบบฟอร์ม ใช้จัดกลุ่มในรายการ */
+  category: 'หนังสือราชการ' | 'งานวิชาการ' | 'การเงิน/พัสดุ' | 'อื่น ๆ';
+  sizeBytes: number;
+  uploadedAt: string;
+  /** เคยใช้ไปกี่ครั้ง — เรียงตัวที่ใช้บ่อยขึ้นก่อน */
+  usageCount: number;
+  lastUsedAt?: string;
+}
+
+/** โครงการ/งบประมาณที่ผูกกับเอกสาร ใช้แยกงานไม่ให้ปนกัน */
+export interface Project {
+  id: string;
+  name: string;
+  /** รหัสโครงการตามระบบของโรงเรียน */
+  code: string;
+  /** แหล่งงบ เช่น เรียนฟรี 15 ปี */
+  budgetSource: string;
+  fiscalYear: string;
+  /** งบที่ตั้งไว้และใช้ไปแล้ว (บาท) — ใช้เตือนเมื่อใกล้เต็ม */
+  budgetTotal: number;
+  budgetUsed: number;
+  active: boolean;
+}
+
+/** ประเภทของใบเสร็จ ใช้จำแนกหมวดค่าใช้จ่ายในรายงานบัญชี */
+export type ReceiptCategoryId =
+  | 'supplies'
+  | 'food'
+  | 'travel'
+  | 'service'
+  | 'utility'
+  | 'other';
+
+export interface ReceiptCategory {
+  id: ReceiptCategoryId;
+  name: string;
+  description: string;
+}
+
 export interface JobOutputFile {
   id: string;
   fileName: string;
@@ -43,6 +90,18 @@ export interface Job {
   errorMessage?: string;
   notes?: string;
   fileCount: number;
+
+  /** แบบฟอร์มที่เลือกใช้ซ้ำ (โหมดเติมแบบฟอร์ม) */
+  formTemplateId?: string;
+  formTemplateName?: string;
+
+  /** โครงการที่เอกสารนี้สังกัด (โหมดทำบัญชี) */
+  projectId?: string;
+  projectName?: string;
+  /** ประเภทใบเสร็จ (โหมดทำบัญชี) */
+  receiptCategory?: ReceiptCategoryId;
+  receiptCategoryName?: string;
+
   createdAt: string;
   completedAt?: string;
   outputs: JobOutputFile[];
@@ -53,6 +112,12 @@ export interface CreateJobInput {
   mode: DocumentMode;
   files: File[];
   notes?: string;
+  /** ใช้แบบฟอร์มที่เคยอัปโหลดไว้แทนการอัปโหลดใหม่ */
+  formTemplateId?: string;
+  /** โหมดทำบัญชี: เอกสารนี้เป็นของโครงการไหน */
+  projectId?: string;
+  /** โหมดทำบัญชี: ใบเสร็จของอะไร */
+  receiptCategory?: ReceiptCategoryId;
 }
 
 /** ผลลัพธ์ทันทีหลังสร้างงาน (backend ควรตอบกลับแบบนี้) */
@@ -60,6 +125,70 @@ export interface CreateJobResponse {
   jobId: string;
   status: JobStatus;
   estimatedSeconds?: number;
+}
+
+/* ------------------------------------------------------------------ */
+/* ระบบเบิกงบ / ยืมพัสดุ (Flow B ใน archive/new UX,UI/plan.md)          */
+/* ------------------------------------------------------------------ */
+
+export type RequisitionKind = 'budget' | 'borrow';
+
+export type RequisitionStatus = 'draft' | 'pending' | 'approved' | 'returned';
+
+export interface RequisitionItem {
+  id: string;
+  name: string;
+  quantity: number;
+  unit: string;
+  /** ราคาต่อหน่วย (บาท) — โหมดยืมพัสดุปล่อยเป็น 0 ได้ */
+  unitPrice: number;
+}
+
+export interface Approver {
+  id: string;
+  name: string;
+  role: string;
+}
+
+export interface Requisition {
+  id: string;
+  /** เลขที่เอกสารตามระบบโรงเรียน */
+  docNo: string;
+  kind: RequisitionKind;
+  status: RequisitionStatus;
+  /** เรื่อง/วัตถุประสงค์ */
+  purpose: string;
+  projectId: string;
+  projectName: string;
+  /** วันที่ต้องใช้ของ */
+  neededBy: string;
+  items: RequisitionItem[];
+  totalAmount: number;
+  approverId: string;
+  approverName: string;
+  /** เหตุผลเมื่อถูกตีกลับ */
+  returnedReason?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateRequisitionInput {
+  kind: RequisitionKind;
+  purpose: string;
+  projectId: string;
+  neededBy: string;
+  items: Omit<RequisitionItem, 'id'>[];
+  approverId: string;
+}
+
+/** รายการที่ AI แนะนำจากคำอธิบายกิจกรรม */
+export interface SuggestedItem {
+  name: string;
+  quantity: number;
+  unit: string;
+  unitPrice: number;
+  /** เหตุผลสั้น ๆ ว่าทำไมถึงแนะนำ */
+  reason: string;
 }
 
 /** รูปแบบ response มาตรฐานที่ตกลงกับ backend */

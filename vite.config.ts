@@ -2,11 +2,13 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { fileURLToPath, URL } from 'node:url';
 
+const resolvePath = (relative: string) => fileURLToPath(new URL(relative, import.meta.url));
+
 export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      '@': resolvePath('./src'),
     },
   },
   server: {
@@ -21,6 +23,11 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: false,
     rollupOptions: {
+      // 2 หน้าแยกกัน: ระบบจริง (index) และ prototype จำลอง LINE OA (line-demo)
+      input: {
+        main: resolvePath('./index.html'),
+        'line-demo': resolvePath('./line-demo.html'),
+      },
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],

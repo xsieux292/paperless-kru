@@ -6,7 +6,8 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 
 export default [
-  { ignores: ['dist', 'legacy', 'node_modules'] },
+  // archive/ และ legacy/ เป็นเอกสารอ้างอิง ไม่ใช่ซอร์สของระบบ
+  { ignores: ['dist', 'legacy', 'archive', 'node_modules'] },
   js.configs.recommended,
   {
     files: ['**/*.{ts,tsx}'],

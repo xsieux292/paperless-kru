@@ -37,6 +37,9 @@ export async function createJob(
   const formData = new FormData();
   formData.append('mode', input.mode);
   if (input.notes) formData.append('notes', input.notes);
+  if (input.formTemplateId) formData.append('formTemplateId', input.formTemplateId);
+  if (input.projectId) formData.append('projectId', input.projectId);
+  if (input.receiptCategory) formData.append('receiptCategory', input.receiptCategory);
   for (const file of input.files) {
     formData.append('files', file, file.name);
   }

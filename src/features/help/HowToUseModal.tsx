@@ -8,7 +8,6 @@ interface HelpStep {
   icon: LucideIcon;
   title: string;
   detail: string;
-  color: string;
 }
 
 const STEPS: HelpStep[] = [
@@ -16,29 +15,25 @@ const STEPS: HelpStep[] = [
     icon: MousePointerClick,
     title: '1. เลือกว่าจะให้ AI ช่วยอะไร',
     detail:
-      'กดที่การ์ดใบใดใบหนึ่งจาก 3 ใบด้านบน การ์ดที่เลือกอยู่จะมีกรอบสีและเครื่องหมายถูกสีเขียวค่ะ',
-    color: 'bg-blue-100 text-blue-600',
+      'แตะการ์ดใบใดใบหนึ่งจาก 3 ใบด้านบน ใบที่เลือกอยู่จะเป็นสีเขียวและมีเครื่องหมายถูกค่ะ',
   },
   {
     icon: Camera,
-    title: '2. ส่งไฟล์หรือถ่ายรูป',
+    title: '2. ถ่ายรูปหรือเลือกไฟล์',
     detail:
-      'กด “เลือกไฟล์ในเครื่อง” ถ้ามีไฟล์อยู่แล้ว หรือกด “ถ่ายรูปใหม่” ถ้าใช้มือถือถ่ายเอกสารตรงนั้นเลยค่ะ',
-    color: 'bg-purple-100 text-purple-600',
+      'กดปุ่มสีเขียวในขั้นตอนที่ 2 ถ้าอยู่หน้าเอกสารให้ถ่ายรูปได้เลย หรือเลือกไฟล์ที่มีอยู่แล้วในเครื่องก็ได้ค่ะ',
   },
   {
     icon: Send,
-    title: '3. กดปุ่มสีเขียวเพื่อส่ง',
+    title: '3. กดปุ่มสีเขียวด้านล่างเพื่อส่ง',
     detail:
       'ระบบจะสรุปให้ดูอีกครั้งก่อนส่งจริง ถ้าถูกต้องแล้วกดยืนยัน จากนั้นปิดหน้านี้ไปพักได้เลยค่ะ',
-    color: 'bg-emerald-100 text-emerald-600',
   },
   {
     icon: Download,
     title: 'เสร็จแล้วรับไฟล์อย่างไร?',
     detail:
       'กลับมาที่หน้านี้เมื่อไรก็ได้ ไฟล์ที่ AI ทำเสร็จจะอยู่ในรายการ “งานที่เสร็จแล้ว” ทางขวามือ กดดาวน์โหลดได้เลยค่ะ',
-    color: 'bg-amber-100 text-amber-600',
   },
 ];
 
@@ -47,47 +42,43 @@ export interface HowToUseModalProps {
   onClose: () => void;
 }
 
-/**
- * คู่มือใช้งานแบบสั้น เปิดจากปุ่ม "วิธีใช้งาน" ที่แถบบน
- * เพิ่มใหม่จาก HTML เดิม เพื่อให้คุณครูที่ไม่ถนัดเทคโนโลยีเริ่มต้นได้ด้วยตัวเอง
- */
+/** คู่มือใช้งานแบบสั้น — ตาม plan ข้อ 8 Onboarding: อ่านจบใน 30 วินาที ไม่ใช่ tutorial ยาว */
 export function HowToUseModal({ open, onClose }: HowToUseModalProps) {
   return (
     <Modal open={open} onClose={onClose} labelledBy="howto-title" className="max-w-2xl">
-      <div className="space-y-6">
+      <div className="space-y-5">
         <div>
-          <h3 id="howto-title" className="font-prompt text-2xl font-bold text-slate-900">
+          <h3 id="howto-title" className="font-display text-heading text-ink">
             วิธีใช้งาน ง่าย ๆ 3 ขั้นตอน
           </h3>
-          <p className="mt-1 text-base text-slate-600">
-            ไม่ต้องติดตั้งอะไรเพิ่มค่ะ ทำตามนี้ได้เลย
-          </p>
+          <p className="mt-1 text-base text-ink-light">ไม่ต้องติดตั้งอะไรเพิ่มค่ะ ทำตามนี้ได้เลย</p>
         </div>
 
-        <ol className="space-y-4">
+        <ol className="space-y-3">
           {STEPS.map((step) => {
             const Icon = step.icon;
             return (
-              <li key={step.title} className="flex items-start gap-4 rounded-2xl bg-slate-50 p-4">
-                <div
-                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${step.color}`}
-                >
+              <li
+                key={step.title}
+                className="flex items-start gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4"
+              >
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-700">
                   <Icon className="h-6 w-6" aria-hidden />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="font-prompt text-base font-bold text-slate-900">{step.title}</h4>
-                  <p className="mt-0.5 text-sm leading-relaxed text-slate-600">{step.detail}</p>
+                  <h4 className="font-display text-base font-bold text-ink">{step.title}</h4>
+                  <p className="mt-0.5 text-base leading-relaxed text-ink-light">{step.detail}</p>
                 </div>
               </li>
             );
           })}
         </ol>
 
-        <div className="flex items-start gap-3 rounded-2xl border-2 border-sky-200 bg-sky-50 p-4 text-sky-900">
-          <Phone className="mt-0.5 h-5 w-5 shrink-0 text-sky-600" aria-hidden />
-          <p className="text-sm leading-relaxed">
+        <div className="flex items-start gap-3 rounded-xl border border-slate-200 p-4">
+          <Phone className="mt-0.5 h-5 w-5 shrink-0 text-ink-light" aria-hidden />
+          <p className="text-base leading-relaxed text-ink-light">
             ถ้ายังไม่แน่ใจตรงไหน โทรหาฝ่ายไอทีของโรงเรียนได้ที่{' '}
-            <a href={`tel:${env.supportPhoneHref}`} className="font-bold underline">
+            <a href={`tel:${env.supportPhoneHref}`} className="font-bold text-primary-700 underline">
               {env.supportPhone}
             </a>{' '}
             ได้ตลอดเวลาค่ะ
@@ -95,7 +86,7 @@ export function HowToUseModal({ open, onClose }: HowToUseModalProps) {
         </div>
 
         <Button type="button" variant="primary" size="lg" fullWidth onClick={onClose}>
-          เข้าใจแล้ว เริ่มใช้งาน
+          เข้าใจแล้ว เริ่มส่งเอกสาร
         </Button>
       </div>
     </Modal>

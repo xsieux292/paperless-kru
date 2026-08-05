@@ -6,6 +6,8 @@ import {
   mockProfile,
   mockProgressSteps,
 } from './mockData';
+import { mockProjects, RECEIPT_CATEGORIES } from './mockCatalog';
+import { mockCatalogServer } from './mockRequisitionServer';
 
 /**
  * Backend จำลองที่ทำงานอยู่ในหน่วยความจำของเบราว์เซอร์
@@ -90,8 +92,11 @@ function advance(job: MockJobRecord): MockJobRecord {
 function buildOutputName(job: Job): { fileName: string; fileType: JobOutputFile['fileType'] } {
   const base = job.title.replace(/\.[^.]+$/, '');
   switch (job.mode) {
-    case 'accounting':
-      return { fileName: `สรุปบัญชี_${base}.xlsx`, fileType: 'xlsx' };
+    case 'accounting': {
+      // ใส่ชื่อโครงการไว้ในชื่อไฟล์ ครูจะได้แยกงานออกจากกันตั้งแต่ตอนดาวน์โหลด
+      const scope = job.projectName ? `${job.projectName}_` : '';
+      return { fileName: `สรุปบัญชี_${scope}${base}.xlsx`, fileType: 'xlsx' };
+    }
     case 'ocr':
       return { fileName: `ข้อความจากรูป_${base}.docx`, fileType: 'docx' };
     case 'template':
@@ -140,15 +145,31 @@ export const mockServer = {
 
     const id = `job-${++jobCounter}`;
     const firstFile = input.files[0];
+
+    const template = input.formTemplateId
+      ? mockCatalogServer.getTemplate(input.formTemplateId)
+      : undefined;
+    if (input.formTemplateId) mockCatalogServer.markTemplateUsed(input.formTemplateId);
+
+    const project = mockProjects.find((item) => item.id === input.projectId);
+    const category = RECEIPT_CATEGORIES.find((item) => item.id === input.receiptCategory);
+
     const record: MockJobRecord = {
       id,
       mode: input.mode,
       status: 'processing',
-      title: firstFile?.name ?? 'เอกสารใหม่',
+      // ถ้าใช้แบบฟอร์มที่บันทึกไว้ ให้ตั้งชื่องานตามแบบฟอร์มนั้น จะได้แยกออกในรายการ
+      title: firstFile?.name ?? template?.name ?? 'เอกสารใหม่',
       progress: 1,
       progressMessage: mockProgressSteps[input.mode][0],
       notes: input.notes,
       fileCount: input.files.length,
+      formTemplateId: input.formTemplateId,
+      formTemplateName: template?.name,
+      projectId: input.projectId,
+      projectName: project?.name,
+      receiptCategory: input.receiptCategory,
+      receiptCategoryName: category?.name,
       createdAt: new Date().toISOString(),
       outputs: [],
       _startedAt: Date.now(),

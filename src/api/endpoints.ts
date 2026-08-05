@@ -15,4 +15,24 @@ export const endpoints = {
     download: (jobId: string, fileId: string) =>
       `/jobs/${encodeURIComponent(jobId)}/files/${encodeURIComponent(fileId)}`,
   },
+  /** แบบฟอร์มที่เคยอัปโหลดไว้ ใช้ซ้ำได้ */
+  formTemplates: {
+    list: () => '/form-templates',
+    detail: (templateId: string) => `/form-templates/${encodeURIComponent(templateId)}`,
+    remove: (templateId: string) => `/form-templates/${encodeURIComponent(templateId)}`,
+  },
+  /** โครงการ / งบประมาณ */
+  projects: {
+    list: () => '/projects',
+  },
+  /** ระบบเบิกงบ / ยืมพัสดุ */
+  requisitions: {
+    list: () => '/requisitions',
+    detail: (id: string) => `/requisitions/${encodeURIComponent(id)}`,
+    create: () => '/requisitions',
+    submit: (id: string) => `/requisitions/${encodeURIComponent(id)}/submit`,
+    /** ให้ AI ช่วยคิดรายการอุปกรณ์จากคำอธิบายกิจกรรม */
+    suggestItems: () => '/requisitions/suggest-items',
+    approvers: () => '/requisitions/approvers',
+  },
 } as const;
