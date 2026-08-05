@@ -191,6 +191,62 @@ export interface SuggestedItem {
   reason: string;
 }
 
+/* ------------------------------------------------------------------ */
+/* AI ช่วยร่างให้ก่อน — ลดการพิมพ์ของครูให้เหลือน้อยที่สุด               */
+/* ------------------------------------------------------------------ */
+
+/** ระดับความมั่นใจของ AI ต่อค่าที่เดามาให้ */
+export type Confidence = 'high' | 'low';
+
+/** ค่าที่ AI เดาให้ พร้อมบอกว่ามั่นใจแค่ไหนและทำไม */
+export interface DraftField<T> {
+  value: T;
+  confidence: Confidence;
+  /** เหตุผลสั้น ๆ ว่าเดามาจากอะไร — ครูจะได้ตัดสินใจได้ว่าจะเชื่อไหม */
+  reason?: string;
+}
+
+/** สรุปว่า AI มั่นใจกี่ช่องจากทั้งหมด ใช้ขึ้นป้าย "4/5 ชัดเจน" */
+export interface DraftSummary {
+  confidentCount: number;
+  totalCount: number;
+}
+
+/** ใบเบิกที่ AI ร่างให้จากประโยคเดียวที่ครูพิมพ์ */
+export interface RequisitionDraft {
+  kind: DraftField<RequisitionKind>;
+  purpose: DraftField<string>;
+  projectId: DraftField<string>;
+  neededBy: DraftField<string>;
+  approverId: DraftField<string>;
+  items: Omit<RequisitionItem, 'id'>[];
+  summary: DraftSummary;
+}
+
+/** ผลที่ AI อ่านได้จากไฟล์ที่ครูส่งมา ใช้เดาบริการและโครงการให้อัตโนมัติ */
+export interface DocumentDetection {
+  mode: DraftField<DocumentMode>;
+  /** เดาโครงการและประเภทให้เมื่อเป็นงานบัญชี */
+  projectId?: DraftField<string>;
+  receiptCategory?: DraftField<ReceiptCategoryId>;
+  /** ข้อมูลที่อ่านได้จากใบเสร็จ */
+  vendor?: DraftField<string>;
+  totalAmount?: DraftField<number>;
+  issuedDate?: DraftField<string>;
+  /** VAT ที่ระบบคำนวณให้เอง ครูไม่ต้องกดเครื่องคิดเลข */
+  vatAmount?: number;
+  summary: DraftSummary;
+}
+
+/** ตัวเลขสรุปประจำวัน แสดงบนการ์ดใบเดียวให้เห็นภาพรวมทันที */
+export interface DailySummary {
+  pendingSignatures: number;
+  budgetUsed: number;
+  budgetTotal: number;
+  portfolioPercent: number;
+  activeJobs: number;
+}
+
 /** รูปแบบ response มาตรฐานที่ตกลงกับ backend */
 export interface ApiEnvelope<T> {
   data: T;

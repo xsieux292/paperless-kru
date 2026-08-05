@@ -1,18 +1,26 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowUpRight, PenLine, Send } from 'lucide-react';
+import { ArrowUpRight, PenLine, Send, Sparkles } from 'lucide-react';
 import { toFriendlyMessage } from '@/api/http';
 import { getReceiptCategories } from '@/api/catalog.api';
 import { DEFAULT_MODE, DOCUMENT_MODES } from '@/constants/documentModes';
 import { useApprovers, useFormTemplates, useProjects } from '@/hooks/useCatalog';
 import { useCreateJob } from '@/hooks/useCreateJob';
 import { useCreateRequisition, useSuggestItems } from '@/hooks/useRequisitions';
-import type { DocumentMode, ReceiptCategoryId, RequisitionItem, RequisitionKind } from '@/types';
+import { useDraftRequisition } from '@/hooks/useAiAssist';
+import type {
+  DocumentMode,
+  ReceiptCategoryId,
+  RequisitionDraft,
+  RequisitionItem,
+  RequisitionKind,
+} from '@/types';
 import { LiffPrimaryButton, LiffSheet } from './components/LiffSheet';
 import { LineChat, LineChatHeader, type ChatItem } from './components/LineChat';
 import { PhoneFrame, StatusBar } from './components/PhoneFrame';
 import { PresenterPanel } from './components/PresenterPanel';
 import { RichMenu } from './components/RichMenu';
 import { BudgetScreen, type BudgetId } from './screens/BudgetScreen';
+import { AiComposerInputScreen, AiComposerReviewScreen } from './screens/AiComposerScreen';
 import { CameraScreen } from './screens/CameraScreen';
 import { JobsScreen } from './screens/JobsScreen';
 import { HowToScreen, PendingSignScreen } from './screens/MiscScreens';
@@ -106,6 +114,9 @@ export function LineDemoApp() {
   const [reqNeededBy, setReqNeededBy] = useState('');
   const [reqApproverId, setReqApproverId] = useState('');
   const [reqItems, setReqItems] = useState<RequisitionItem[]>([]);
+  // AI ร่างใบเบิกให้จากประโยคเดียว — ทางหลักของ flow นี้
+  const [reqDescription, setReqDescription] = useState('');
+  const [reqDraft, setReqDraft] = useState<RequisitionDraft | null>(null);
   const [aiOpen, setAiOpen] = useState(false);
   const [aiDescription, setAiDescription] = useState('');
   const [aiSelected, setAiSelected] = useState<Set<number>>(new Set());
@@ -118,6 +129,7 @@ export function LineDemoApp() {
   const createJob = useCreateJob();
   const createRequisition = useCreateRequisition();
   const suggest = useSuggestItems();
+  const drafting = useDraftRequisition();
 
   const modeConfig = DOCUMENT_MODES[mode];
   const usesSavedTemplate = mode === 'template' && formatSource === 'saved';
@@ -256,10 +268,28 @@ export function LineDemoApp() {
       setReqNeededBy('');
       setReqApproverId('');
       setReqItems([]);
+      setReqDescription('');
+      setReqDraft(null);
       goTo('chat-req-done');
     } catch (error) {
       setToast(toFriendlyMessage(error));
     }
+  };
+
+  const handleDraftRequisition = () => {
+    drafting.mutate(reqDescription, {
+      onSuccess: (result) => {
+        setReqDraft(result);
+        setReqKind(result.kind.value);
+        setReqPurpose(result.purpose.value);
+        setReqProjectId(result.projectId.value);
+        setReqNeededBy(result.neededBy.value);
+        setReqApproverId(result.approverId.value);
+        setReqItems(result.items.map((item, index) => ({ ...item, id: `draft-${index}` })));
+        goTo('liff-req-review');
+      },
+      onError: (error) => setToast(toFriendlyMessage(error)),
+    });
   };
 
   const handleAskAi = () => {
@@ -304,6 +334,8 @@ export function LineDemoApp() {
     setNotes('');
     setAttachedFiles([]);
     setReqItems([]);
+    setReqDescription('');
+    setReqDraft(null);
     setMenuTab('docdone');
     setMenuCollapsed(false);
     setFlow('docdone');
@@ -429,7 +461,7 @@ export function LineDemoApp() {
                 onTapCamera={() => openMenuScreen('liff-camera')}
                 onTapUpload={() => openMenuScreen('liff-upload-mode')}
                 onTapPendingSign={() => openMenuScreen('liff-pending')}
-                onTapRequisition={() => openMenuScreen('liff-req-info')}
+                onTapRequisition={() => openMenuScreen('liff-req-tell')}
                 onTapJobs={() => openMenuScreen('liff-jobs')}
                 onTapHowTo={() => openMenuScreen('liff-howto')}
                 onTapPortfolio={() => openMenuScreen('liff-portfolio')}
@@ -621,7 +653,73 @@ export function LineDemoApp() {
               </LiffSheet>
             )}
 
-            {/* ---------- Flow: เบิกงบ / ยืมพัสดุ ---------- */}
+            {/* ---------- Flow: เบิกงบ / ยืมพัสดุ (AI ร่างให้ก่อน) ---------- */}
+            {stepId === 'liff-req-tell' && (
+              <LiffSheet
+                title="เบิกงบ / ยืมพัสดุ"
+                onBack={closeLiff}
+                onClose={closeLiff}
+                footer={
+                  <div className="space-y-2">
+                    <LiffPrimaryButton
+                      onClick={handleDraftRequisition}
+                      disabled={!reqDescription.trim()}
+                      loading={drafting.isPending}
+                      loadingText="AI กำลังร่างใบเบิกให้…"
+                      icon={<Sparkles className="h-5 w-5" aria-hidden />}
+                    >
+                      ให้ AI ร่างใบเบิกให้
+                    </LiffPrimaryButton>
+                    <button
+                      type="button"
+                      onClick={() => goTo('liff-req-info')}
+                      className="h-11 w-full rounded-btn text-[13px] font-bold text-ink-light"
+                    >
+                      หรือกรอกเองทีละขั้น
+                    </button>
+                  </div>
+                }
+              >
+                <AiComposerInputScreen
+                  description={reqDescription}
+                  onDescriptionChange={setReqDescription}
+                />
+              </LiffSheet>
+            )}
+
+            {stepId === 'liff-req-review' && reqDraft && (
+              <LiffSheet
+                title="ตรวจใบเบิกที่ AI ร่างให้"
+                onBack={() => goTo('liff-req-tell')}
+                onClose={closeLiff}
+                footer={
+                  <LiffPrimaryButton
+                    onClick={() => void handleSubmitRequisition()}
+                    loading={createRequisition.isPending}
+                    loadingText="กำลังส่งใบเบิก…"
+                    disabled={!reqPurpose.trim() || reqValidItems.length === 0}
+                    icon={<Send className="h-5 w-5" aria-hidden />}
+                  >
+                    ถูกต้องแล้ว — ส่งให้เซ็น
+                  </LiffPrimaryButton>
+                }
+              >
+                <AiComposerReviewScreen
+                  draft={reqDraft}
+                  purpose={reqPurpose}
+                  onPurposeChange={setReqPurpose}
+                  projectId={reqProjectId}
+                  onProjectChange={setReqProjectId}
+                  neededBy={reqNeededBy}
+                  onNeededByChange={setReqNeededBy}
+                  approverId={reqApproverId}
+                  onApproverChange={setReqApproverId}
+                  items={reqItems}
+                  onItemsChange={setReqItems}
+                />
+              </LiffSheet>
+            )}
+
             {stepId === 'liff-req-info' && (
               <LiffSheet
                 title="เบิกงบ / ยืมพัสดุ"

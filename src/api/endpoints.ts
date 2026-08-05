@@ -35,4 +35,11 @@ export const endpoints = {
     suggestItems: () => '/requisitions/suggest-items',
     approvers: () => '/requisitions/approvers',
   },
+  /** AI ช่วยร่าง/เดาให้ก่อน เพื่อลดการกรอกของครู */
+  ai: {
+    draftRequisition: () => '/ai/draft-requisition',
+    detectDocument: () => '/ai/detect-document',
+    dailySummary: () => '/ai/daily-summary',
+    portfolioCaption: () => '/ai/portfolio-caption',
+  },
 } as const;

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { HelpCard } from '@/components/layout/HelpCard';
 import { MockModeBanner } from '@/components/layout/MockModeBanner';
-import { WelcomeBanner } from '@/components/layout/WelcomeBanner';
+import { DailySummaryCard } from '@/components/layout/DailySummaryCard';
 import { HowToUseModal } from '@/features/help/HowToUseModal';
 import { JobStatusPanel } from '@/features/jobs/JobStatusPanel';
 import { UploadForm } from '@/features/upload/UploadForm';
@@ -24,7 +24,7 @@ export function UploadPortalPage({
       <AppHeader route={route} onNavigate={onNavigate} onOpenHelp={() => setHelpOpen(true)} />
 
       <main className="mx-auto mt-6 max-w-7xl px-4 sm:px-6 lg:px-8">
-        <WelcomeBanner />
+        <DailySummaryCard onOpenRequisition={() => onNavigate('requisition')} />
 
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           <div className="space-y-6 lg:col-span-2">

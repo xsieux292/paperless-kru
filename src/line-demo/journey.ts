@@ -18,7 +18,9 @@ export type StepId =
   | 'liff-upload-source'
   | 'liff-upload-review'
   | 'chat-upload-done'
-  // Flow เบิกงบ / ยืมพัสดุ (ตรงกับหน้า "เบิกงบ / ยืมพัสดุ" บนเว็บ)
+  // Flow เบิกงบ / ยืมพัสดุ — ค่าเริ่มต้นคือให้ AI ร่างให้ (ตรงกับหน้าเว็บ)
+  | 'liff-req-tell'
+  | 'liff-req-review'
   | 'liff-req-info'
   | 'liff-req-items'
   | 'liff-req-approver'
@@ -211,6 +213,35 @@ export const STEPS: Record<StepId, StepScript> = {
   },
 
   /* ---------------- Flow: เบิกงบ / ยืมพัสดุ ---------------- */
+  'liff-req-tell': {
+    id: 'liff-req-tell',
+    flow: 'requisition',
+    label: 'เล่าให้ AI ฟัง 1 บรรทัด',
+    what: 'ครูพิมพ์สั้น ๆ ว่าจะเบิกอะไร ใช้เมื่อไร แค่บรรทัดเดียว',
+    why: [
+      'ของเดิมต้องกรอกเองราว 8 ช่อง ซึ่งไม่ต่างจากเขียนใบเบิกกระดาษเลย',
+      'พิมพ์แบบที่พูดได้เลย ไม่ต้องเป็นภาษาราชการ — AI เรียบเรียงให้ทีหลัง',
+      'พิมพ์ไม่สะดวกก็กดไมค์บนแป้นพิมพ์พูดใส่ได้',
+    ],
+    principles: ['⑥ AI ทำก่อน ครูแค่ตรวจ', '⑧ ใช้ภาษาที่ครูคุ้นเคย'],
+    cue: 'แตะตัวอย่างสักอัน แล้วกดปุ่มเขียว',
+  },
+
+  'liff-req-review': {
+    id: 'liff-req-review',
+    flow: 'requisition',
+    label: 'ตรวจของที่ AI ร่างมา',
+    what: 'AI เดาให้ครบทั้งใบ — ประเภท เรื่อง โครงการ วันที่ ผู้อนุมัติ และรายการของ',
+    why: [
+      'ช่องที่ AI มั่นใจขึ้น "AI มั่นใจ" สีเขียว ครูข้ามได้เลย',
+      'ช่องที่ไม่มั่นใจขึ้นสีส้มพร้อมบอกเหตุผล ครูจึงรู้ว่าควรตรวจตรงไหน',
+      'ผู้อนุมัติเลือกให้ตามวงเงินโดยอัตโนมัติ (เกิน 5,000 บาทส่ง ผอ.)',
+      'แก้ได้ทุกช่องทันทีโดยไม่ต้องกดเข้าโหมดแก้ไขก่อน',
+    ],
+    principles: ['⑥ AI ทำก่อน ครูแค่ตรวจ', '⑤ ส้ม = ตรงนี้รอคุณอยู่'],
+    cue: 'ดูให้ครบแล้วกด “ถูกต้องแล้ว — ส่งให้เซ็น”',
+  },
+
   'liff-req-info': {
     id: 'liff-req-info',
     flow: 'requisition',
@@ -342,6 +373,6 @@ export const FLOW_SEQUENCE: Record<FlowId, StepId[]> = {
     'chat-upload-done',
     'liff-jobs',
   ],
-  requisition: ['liff-req-info', 'liff-req-items', 'liff-req-approver', 'chat-req-done'],
+  requisition: ['liff-req-tell', 'liff-req-review', 'chat-req-done'],
   teachgrow: ['liff-portfolio'],
 };

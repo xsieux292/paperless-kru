@@ -4,11 +4,13 @@ import { Button } from '@/components/ui/Button';
 import { StepHeader } from '@/components/ui/StepHeader';
 import { DEFAULT_MODE, DOCUMENT_MODES } from '@/constants/documentModes';
 import { useCreateJob } from '@/hooks/useCreateJob';
+import { useDetectDocument } from '@/hooks/useAiAssist';
 import { validateFiles } from '@/lib/fileValidation';
 import { formatFileSize } from '@/lib/format';
 import { toFriendlyMessage } from '@/api/http';
 import { useToast } from '@/providers/toastContext';
-import type { DocumentMode, ReceiptCategoryId } from '@/types';
+import type { DocumentDetection, DocumentMode, ReceiptCategoryId } from '@/types';
+import { AiDetectionBanner } from './AiDetectionBanner';
 import { ConfirmSubmitDialog } from './ConfirmSubmitDialog';
 import { Dropzone } from './Dropzone';
 import { ModeSelector } from './ModeSelector';
@@ -44,7 +46,11 @@ export function UploadForm() {
   const [projectId, setProjectId] = useState<string | null>(null);
   const [receiptCategory, setReceiptCategory] = useState<ReceiptCategoryId | null>(null);
 
+  // ผลที่ AI เดาให้จากไฟล์ที่แนบ — ใช้ตั้งค่าให้อัตโนมัติ ครูจะได้ไม่ต้องเลือกเอง
+  const [detection, setDetection] = useState<DocumentDetection | null>(null);
+
   const toast = useToast();
+  const detect = useDetectDocument();
   const { submit, uploadPercent, isSubmitting } = useCreateJob();
 
   const modeConfig = DOCUMENT_MODES[mode];
@@ -72,21 +78,36 @@ export function UploadForm() {
 
       if (accepted.length > 0) {
         setFiles((current) => [...current, ...accepted]);
-        toast.success(`เพิ่มไฟล์แล้ว ${accepted.length} ไฟล์`, 'ตรวจดูรายการด้านล่างได้เลยค่ะ');
+
+        // ให้ AI ดูไฟล์แล้วตั้งค่าให้เลย — ลดขั้นตอนที่ครูต้องเลือกเอง
+        detect.mutate(accepted, {
+          onSuccess: (result) => {
+            setDetection(result);
+            setMode(result.mode.value);
+            if (result.projectId) setProjectId(result.projectId.value);
+            if (result.receiptCategory) setReceiptCategory(result.receiptCategory.value);
+            if (result.mode.value !== 'template') setFormatSource('new');
+          },
+          // ถ้าเดาไม่ได้ก็ไม่เป็นไร ครูเลือกเองได้ตามปกติ ไม่ต้องรบกวนด้วย error
+          onError: () => setDetection(null),
+        });
       }
 
       for (const { file, reason } of rejected) {
         toast.warning(`ยังไม่ได้เพิ่มไฟล์ ${file.name}`, reason);
       }
     },
-    [files, toast],
+    [files, toast, detect],
   );
 
   const removeFile = useCallback((index: number) => {
     setFiles((current) => current.filter((_, itemIndex) => itemIndex !== index));
   }, []);
 
-  const clearFiles = useCallback(() => setFiles([]), []);
+  const clearFiles = useCallback(() => {
+    setFiles([]);
+    setDetection(null);
+  }, []);
 
   const handleModeChange = useCallback(
     (nextMode: DocumentMode) => {
@@ -176,6 +197,13 @@ export function UploadForm() {
             complete={hasDocumentSource && scopeComplete}
             waiting={!hasDocumentSource || !scopeComplete}
           />
+          {/* AI เดาให้ก่อน แล้วครูค่อยแก้เฉพาะจุดที่ไม่ตรง */}
+          <AiDetectionBanner
+            detecting={detect.isPending}
+            detection={detection}
+            onUndo={() => setDetection(null)}
+          />
+
           <RequirementBox mode={modeConfig} />
 
           {/* เลือกแบบฟอร์มที่เคยส่งไว้ แทนการอัปโหลดไฟล์เดิมซ้ำ */}
