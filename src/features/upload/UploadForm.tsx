@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { StepHeader } from '@/components/ui/StepHeader';
 import { DEFAULT_MODE, DOCUMENT_MODES } from '@/constants/documentModes';
 import { useCreateJob } from '@/hooks/useCreateJob';
+import { useFormTemplates } from '@/hooks/useCatalog';
 import { useDetectDocument } from '@/hooks/useAiAssist';
 import { validateFiles } from '@/lib/fileValidation';
 import { formatFileSize } from '@/lib/format';
@@ -18,6 +19,7 @@ import { NotesField } from './NotesField';
 import { ModeNote, RequirementBox } from './RequirementBox';
 import { ReceiptScopePicker } from './ReceiptScopePicker';
 import { SavedFormatPicker, type FormatSource } from './SavedFormatPicker';
+import { TemplateContentEditor } from './TemplateContentEditor';
 import { SelectedFileList } from './SelectedFileList';
 import { SuccessDialog } from './SuccessDialog';
 
@@ -42,12 +44,31 @@ export function UploadForm() {
   const [formatSource, setFormatSource] = useState<FormatSource>('saved');
   const [templateId, setTemplateId] = useState<string | null>(null);
 
+  // โหมดเติมแบบฟอร์ม: เนื้อหาที่จะกรอกลงแต่ละช่อง + ช่องบังคับที่ยังว่าง
+  const [formValues, setFormValues] = useState<Record<string, string>>({});
+  const [missingFields, setMissingFields] = useState<string[]>([]);
+
   // โหมดทำบัญชี: ใบเสร็จชุดนี้เป็นของโครงการไหน / ค่าอะไร
   const [projectId, setProjectId] = useState<string | null>(null);
   const [receiptCategory, setReceiptCategory] = useState<ReceiptCategoryId | null>(null);
 
   // ผลที่ AI เดาให้จากไฟล์ที่แนบ — ใช้ตั้งค่าให้อัตโนมัติ ครูจะได้ไม่ต้องเลือกเอง
   const [detection, setDetection] = useState<DocumentDetection | null>(null);
+
+  const templates = useFormTemplates();
+  const templateName = templates.data?.find((item) => item.id === templateId)?.name;
+
+  /**
+   * ต้องเป็น useCallback เพราะลูกเรียกใน useEffect
+   * ถ้าสร้างฟังก์ชันใหม่ทุก render จะกลายเป็น loop ไม่รู้จบ
+   */
+  const handleMissingChange = useCallback((missing: string[]) => {
+    setMissingFields((current) =>
+      current.length === missing.length && current.every((item, index) => item === missing[index])
+        ? current
+        : missing,
+    );
+  }, []);
 
   const toast = useToast();
   const detect = useDetectDocument();
@@ -61,7 +82,12 @@ export function UploadForm() {
   const hasDocumentSource = hasFiles || (usesSavedTemplate && templateId !== null);
   /** โหมดบัญชีต้องระบุโครงการและประเภทก่อน เพื่อให้รายงานแยกกันได้ */
   const scopeComplete = mode !== 'accounting' || (projectId !== null && receiptCategory !== null);
-  const canSubmit = hasDocumentSource && scopeComplete;
+  /**
+   * โหมดเติมแบบฟอร์มต้องมีเนื้อหาในช่องบังคับครบก่อน
+   * ของเดิมเลือกแบบฟอร์มแล้วกดส่งได้เลย ทั้งที่ AI ยังไม่รู้ว่าจะกรอกอะไรลงไป
+   */
+  const contentComplete = !usesSavedTemplate || missingFields.length === 0;
+  const canSubmit = hasDocumentSource && scopeComplete && contentComplete;
 
   /** เหตุผลที่ยังกดส่งไม่ได้ — ต้องบอกเสมอ ไม่ปล่อยให้ครูเดา (plan ข้อ ⑦) */
   const blockedReason = !hasDocumentSource
@@ -70,7 +96,9 @@ export function UploadForm() {
       : 'ปุ่มส่งจะกดได้เมื่อมีไฟล์อย่างน้อย 1 ไฟล์ค่ะ — กลับไปที่ขั้นตอนที่ 2 ได้เลย'
     : !scopeComplete
       ? 'ยังขาดอีกนิดเดียวค่ะ — เลือกโครงการและประเภทใบเสร็จในขั้นตอนที่ 2 ให้ครบก่อนนะคะ'
-      : null;
+      : !contentComplete
+        ? `ยังไม่ได้บอก AI ว่าจะกรอกอะไรลงไปค่ะ — ขาดช่อง ${missingFields.join(' · ')}`
+        : null;
 
   const handleFilesSelected = useCallback(
     (incoming: File[]) => {
@@ -112,6 +140,8 @@ export function UploadForm() {
   const handleModeChange = useCallback(
     (nextMode: DocumentMode) => {
       setMode(nextMode);
+      // เปลี่ยนบริการแล้วเนื้อหาแบบฟอร์มเดิมใช้ไม่ได้ ต้องล้างทิ้ง
+      setFormValues({});
       // เตือนเมื่อเปลี่ยนบริการทั้งที่เลือกไฟล์ไว้แล้ว เพราะไฟล์ที่ต้องใช้อาจคนละแบบ
       if (files.length > 0) {
         toast.showToast({
@@ -144,11 +174,13 @@ export function UploadForm() {
         formTemplateId: usesSavedTemplate && templateId ? templateId : undefined,
         projectId: mode === 'accounting' && projectId ? projectId : undefined,
         receiptCategory: mode === 'accounting' && receiptCategory ? receiptCategory : undefined,
+        formValues: usesSavedTemplate && Object.keys(formValues).length > 0 ? formValues : undefined,
       });
       setShowConfirm(false);
       setShowSuccess(true);
       setFiles([]);
       setNotes('');
+      setFormValues({});
     } catch (error) {
       setShowConfirm(false);
       toast.error('ส่งเอกสารไม่สำเร็จ', toFriendlyMessage(error));
@@ -204,7 +236,7 @@ export function UploadForm() {
             onUndo={() => setDetection(null)}
           />
 
-          <RequirementBox mode={modeConfig} />
+          <RequirementBox mode={modeConfig} skip={usesSavedTemplate && templateId !== null} />
 
           {/* เลือกแบบฟอร์มที่เคยส่งไว้ แทนการอัปโหลดไฟล์เดิมซ้ำ */}
           {mode === 'template' && (
@@ -212,7 +244,23 @@ export function UploadForm() {
               source={formatSource}
               onSourceChange={setFormatSource}
               selectedTemplateId={templateId}
-              onSelectTemplate={setTemplateId}
+              onSelectTemplate={(id) => {
+                // เปลี่ยนแบบฟอร์ม = คนละชุดช่อง ต้องล้างเนื้อหาเดิมทิ้ง
+                if (id !== templateId) setFormValues({});
+                setTemplateId(id);
+              }}
+              disabled={isSubmitting}
+            />
+          )}
+
+          {/* เลือกแบบฟอร์มแล้ว → บอกว่าต้องกรอกช่องอะไร แล้วให้ AI ร่างให้ */}
+          {usesSavedTemplate && templateId && (
+            <TemplateContentEditor
+              templateId={templateId}
+              templateName={templateName ?? ''}
+              values={formValues}
+              onValuesChange={setFormValues}
+              onMissingChange={handleMissingChange}
               disabled={isSubmitting}
             />
           )}
@@ -230,12 +278,20 @@ export function UploadForm() {
 
           {usesSavedTemplate && (
             <p className="mb-2 text-base text-ink-light">
-              จะแนบไฟล์ข้อมูลเพิ่ม (เช่น รูปบันทึกที่จดไว้) ให้ AI ใช้กรอกด้วยก็ได้ค่ะ —
-              ไม่แนบก็ส่งได้เลย
+              ถ้ามีเอกสารอ้างอิง (เช่น รูปบันทึกที่จดไว้ หรือหนังสือฉบับเดิม)
+              แนบเพิ่มให้ AI ใช้ประกอบได้ค่ะ — ไม่แนบก็ส่งได้เลย
             </p>
           )}
           <Dropzone
             mode={modeConfig}
+            labelOverride={
+              usesSavedTemplate
+                ? {
+                    cameraLabel: 'ถ่ายรูปข้อมูลประกอบ',
+                    fileLabel: 'แนบไฟล์ข้อมูลประกอบ',
+                  }
+                : undefined
+            }
             onFilesSelected={handleFilesSelected}
             isPrimaryAction={!hasDocumentSource}
             disabled={isSubmitting}

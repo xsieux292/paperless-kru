@@ -1,8 +1,16 @@
 import { env } from '@/config/env';
-import type { Approver, FormTemplate, Project, ReceiptCategory } from '@/types';
+import type {
+  Approver,
+  FormContentDraft,
+  FormTemplate,
+  FormTemplateSpec,
+  Project,
+  ReceiptCategory,
+} from '@/types';
 import { http } from './http';
 import { endpoints } from './endpoints';
 import { mockCatalogServer } from './mock/mockRequisitionServer';
+import { mockFormTemplateSpecs } from './mock/mockFormTemplates';
 import { RECEIPT_CATEGORIES } from './mock/mockCatalog';
 
 /**
@@ -32,4 +40,27 @@ export async function fetchApprovers(): Promise<Approver[]> {
  */
 export function getReceiptCategories(): ReceiptCategory[] {
   return RECEIPT_CATEGORIES;
+}
+
+/**
+ * อ่านโครงของแบบฟอร์มว่าต้องกรอกช่องอะไรบ้าง
+ * ใช้บอกครูล่วงหน้าว่าต้องเตรียมข้อมูลอะไร แทนที่จะปล่อยให้เดาเอง
+ */
+export async function fetchFormTemplateSpec(
+  templateId: string,
+  templateName: string,
+): Promise<FormTemplateSpec> {
+  if (env.useMock) return mockFormTemplateSpecs.inspect(templateId, templateName);
+  return http.get<FormTemplateSpec>(endpoints.formTemplates.spec(templateId));
+}
+
+/** ให้ AI ร่างเนื้อหาลงทุกช่องของแบบฟอร์มจากประโยคเดียว */
+export async function draftFormContent(
+  templateId: string,
+  description: string,
+): Promise<FormContentDraft> {
+  if (env.useMock) return mockFormTemplateSpecs.draftContent(templateId, description);
+  return http.post<FormContentDraft>(endpoints.formTemplates.draftContent(templateId), {
+    description,
+  });
 }

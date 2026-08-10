@@ -118,6 +118,8 @@ export interface CreateJobInput {
   projectId?: string;
   /** โหมดทำบัญชี: ใบเสร็จของอะไร */
   receiptCategory?: ReceiptCategoryId;
+  /** โหมดเติมแบบฟอร์ม: เนื้อหาที่จะกรอกลงแต่ละช่อง */
+  formValues?: Record<string, string>;
 }
 
 /** ผลลัพธ์ทันทีหลังสร้างงาน (backend ควรตอบกลับแบบนี้) */
@@ -235,6 +237,34 @@ export interface DocumentDetection {
   issuedDate?: DraftField<string>;
   /** VAT ที่ระบบคำนวณให้เอง ครูไม่ต้องกดเครื่องคิดเลข */
   vatAmount?: number;
+  summary: DraftSummary;
+}
+
+/**
+ * ช่องที่แบบฟอร์มหนึ่ง ๆ ต้องกรอก
+ * ระบบอ่านจากตัวแบบฟอร์มแล้วบอกครูล่วงหน้าว่าต้องเตรียมข้อมูลอะไรบ้าง
+ */
+export interface FormFieldSpec {
+  id: string;
+  label: string;
+  /** ต้องมีค่าถึงจะส่งได้ */
+  required: boolean;
+  /** คำใบ้/ตัวอย่างที่แสดงใต้ช่อง */
+  hint?: string;
+  /** ช่องเนื้อหายาว ใช้ textarea แทน input */
+  multiline?: boolean;
+}
+
+/** โครงของแบบฟอร์ม — ใช้บอกครูว่าแบบฟอร์มนี้มีช่องอะไรบ้าง */
+export interface FormTemplateSpec {
+  templateId: string;
+  templateName: string;
+  fields: FormFieldSpec[];
+}
+
+/** เนื้อหาที่ AI ร่างลงในแต่ละช่องของแบบฟอร์ม */
+export interface FormContentDraft {
+  values: Record<string, DraftField<string>>;
   summary: DraftSummary;
 }
 

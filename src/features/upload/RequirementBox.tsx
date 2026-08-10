@@ -15,7 +15,16 @@ export function ModeNote({ mode }: { mode: DocumentModeConfig }) {
  * กล่อง "สิ่งที่คุณครูต้องเตรียม"
  * แสดงเป็นรายการเป็นข้อ ๆ เพื่อให้รู้ทันทีว่าต้องส่งอะไร โดยไม่ต้องอ่านย่อหน้ายาว
  */
-export function RequirementBox({ mode }: { mode: DocumentModeConfig }) {
+export function RequirementBox({
+  mode,
+  /** เลือกแบบฟอร์มจากระบบไปแล้ว — ไม่ต้องบอกให้ไปหาไฟล์แบบฟอร์มอีก */
+  skip = false,
+}: {
+  mode: DocumentModeConfig;
+  skip?: boolean;
+}) {
+  if (skip) return null;
+
   const Icon = mode.requirement.icon;
 
   return (

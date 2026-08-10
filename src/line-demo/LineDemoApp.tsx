@@ -24,6 +24,7 @@ import { RichMenu } from './components/RichMenu';
 import { BudgetScreen, type BudgetId } from './screens/BudgetScreen';
 import { AiComposerInputScreen, AiComposerReviewScreen } from './screens/AiComposerScreen';
 import { CameraScreen } from './screens/CameraScreen';
+import { TemplateContentScreen } from './screens/TemplateContentScreen';
 import { JobsScreen } from './screens/JobsScreen';
 import { HowToScreen, PendingSignScreen } from './screens/MiscScreens';
 import type { PendingDoc } from './data/pendingDocs';
@@ -119,6 +120,16 @@ export function LineDemoApp() {
   const [receiptCategory, setReceiptCategory] = useState<ReceiptCategoryId | null>(null);
   const [notes, setNotes] = useState('');
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
+  // เนื้อหาที่จะกรอกลงแบบฟอร์ม + ช่องบังคับที่ยังว่าง
+  const [formValues, setFormValues] = useState<Record<string, string>>({});
+  const [missingFields, setMissingFields] = useState<string[]>([]);
+  const handleMissingChange = useCallback((missing: string[]) => {
+    setMissingFields((current) =>
+      current.length === missing.length && current.every((item, i) => item === missing[i])
+        ? current
+        : missing,
+    );
+  }, []);
 
   /* ---- Flow: เบิกงบ / ยืมพัสดุ ---- */
   const [reqKind, setReqKind] = useState<RequisitionKind>('budget');
@@ -215,7 +226,9 @@ export function LineDemoApp() {
   /* ---------------- ส่งเอกสารให้ AI ---------------- */
   const canSubmitUpload =
     (attachedFiles.length > 0 || (usesSavedTemplate && templateId !== null)) &&
-    (mode !== 'accounting' || (projectId !== null && receiptCategory !== null));
+    (mode !== 'accounting' || (projectId !== null && receiptCategory !== null)) &&
+    // โหมดแบบฟอร์มต้องมีเนื้อหาในช่องบังคับครบก่อน ไม่งั้น AI ไม่รู้จะกรอกอะไร
+    (!usesSavedTemplate || missingFields.length === 0);
 
   const handleSubmitUpload = async () => {
     try {
@@ -231,6 +244,8 @@ export function LineDemoApp() {
         files,
         notes: notes.trim() || undefined,
         formTemplateId: usesSavedTemplate && templateId ? templateId : undefined,
+        formValues:
+          usesSavedTemplate && Object.keys(formValues).length > 0 ? formValues : undefined,
         projectId: mode === 'accounting' && projectId ? projectId : undefined,
         receiptCategory: mode === 'accounting' && receiptCategory ? receiptCategory : undefined,
       });
@@ -253,6 +268,7 @@ export function LineDemoApp() {
 
       setAttachedFiles([]);
       setNotes('');
+      setFormValues({});
       goTo('chat-upload-done');
     } catch (error) {
       setToast(toFriendlyMessage(error));
@@ -631,7 +647,11 @@ export function LineDemoApp() {
                     onClick={() => goTo('liff-upload-review')}
                     disabled={!canSubmitUpload}
                   >
-                    {canSubmitUpload ? 'ไปตรวจทานก่อนส่ง' : 'ยังกรอกไม่ครบ'}
+                    {canSubmitUpload
+                      ? 'ไปตรวจทานก่อนส่ง'
+                      : missingFields.length > 0
+                        ? `ยังขาด ${missingFields.join(' · ')}`
+                        : 'ยังกรอกไม่ครบ'}
                   </LiffPrimaryButton>
                 }
               >
@@ -654,6 +674,19 @@ export function LineDemoApp() {
                     setToast('แนบไฟล์แล้วค่ะ (จำลอง)');
                   }}
                 />
+
+                {/* เลือกแบบฟอร์มแล้ว → บอกช่องที่ต้องกรอก แล้วให้ AI ร่างให้ */}
+                {usesSavedTemplate && templateId && (
+                  <div className="mt-4">
+                    <TemplateContentScreen
+                      templateId={templateId}
+                      templateName={templateName ?? ''}
+                      values={formValues}
+                      onValuesChange={setFormValues}
+                      onMissingChange={handleMissingChange}
+                    />
+                  </div>
+                )}
               </LiffSheet>
             )}
 

@@ -6,6 +6,11 @@ import { env } from '@/config/env';
 import { cn } from '@/lib/cn';
 
 export interface DropzoneProps {
+  /**
+   * ป้ายปุ่มแบบเจาะจง — ใช้ตอนที่ไฟล์ที่แนบไม่ใช่ "แบบฟอร์ม" แล้ว
+   * (เลือกแบบฟอร์มจากระบบไปแล้ว ไฟล์ที่แนบคือข้อมูลประกอบ)
+   */
+  labelOverride?: { cameraLabel: string; fileLabel: string };
   mode: DocumentModeConfig;
   onFilesSelected: (files: File[]) => void;
   /**
@@ -22,7 +27,13 @@ export interface DropzoneProps {
  * ป้ายปุ่มเขียนเป็น "กริยา + สิ่งของ" ตามบริการที่เลือก เช่น "ถ่ายรูปใบเสร็จ"
  * และบอกข้อจำกัดไฟล์ไว้ล่วงหน้า เพื่อไม่ให้เจอปัญหาทีหลัง
  */
-export function Dropzone({ mode, onFilesSelected, isPrimaryAction, disabled = false }: DropzoneProps) {
+export function Dropzone({
+  mode,
+  labelOverride,
+  onFilesSelected,
+  isPrimaryAction,
+  disabled = false,
+}: DropzoneProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -58,7 +69,7 @@ export function Dropzone({ mode, onFilesSelected, isPrimaryAction, disabled = fa
       leftIcon={<Camera className="h-5 w-5" aria-hidden />}
       onClick={() => cameraInputRef.current?.click()}
     >
-      {mode.upload.cameraLabel}
+      {(labelOverride?.cameraLabel ?? mode.upload.cameraLabel)}
     </Button>
   );
 
@@ -72,7 +83,7 @@ export function Dropzone({ mode, onFilesSelected, isPrimaryAction, disabled = fa
       leftIcon={<FolderOpen className="h-5 w-5" aria-hidden />}
       onClick={() => fileInputRef.current?.click()}
     >
-      {mode.upload.fileLabel}
+      {(labelOverride?.fileLabel ?? mode.upload.fileLabel)}
     </Button>
   );
 

@@ -20,6 +20,11 @@ export const endpoints = {
     list: () => '/form-templates',
     detail: (templateId: string) => `/form-templates/${encodeURIComponent(templateId)}`,
     remove: (templateId: string) => `/form-templates/${encodeURIComponent(templateId)}`,
+    /** อ่านว่าแบบฟอร์มนี้มีช่องอะไรบ้าง */
+    spec: (templateId: string) => `/form-templates/${encodeURIComponent(templateId)}/spec`,
+    /** ให้ AI ร่างเนื้อหาลงทุกช่องของแบบฟอร์ม */
+    draftContent: (templateId: string) =>
+      `/form-templates/${encodeURIComponent(templateId)}/draft-content`,
   },
   /** โครงการ / งบประมาณ */
   projects: {
