@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   detectDocument,
+  draftActivityPlan,
   draftRequisition,
   fetchDailySummary,
   writePortfolioCaption,
@@ -28,4 +29,9 @@ export function useDailySummary(pendingSignatures: number, activeJobs: number) {
     queryFn: () => fetchDailySummary(pendingSignatures, activeJobs),
     staleTime: 60_000,
   });
+}
+
+/** ให้ AI เติมฟอร์มวางแผนงบกิจกรรมจากประโยคเดียว */
+export function useDraftActivityPlan() {
+  return useMutation({ mutationFn: draftActivityPlan });
 }

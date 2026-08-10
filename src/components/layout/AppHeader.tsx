@@ -1,4 +1,4 @@
-import { CircleHelp, FileText, Sparkles, Wallet } from 'lucide-react';
+import { CircleHelp, FileText, Sparkles, Wallet, Calculator } from 'lucide-react';
 import { useProfile } from '@/hooks/useProfile';
 import { cn } from '@/lib/cn';
 import { ROUTE_LABEL, ROUTE_ORDER, type AppRoute } from '@/routes';
@@ -7,6 +7,7 @@ import { FontSizeControl } from './FontSizeControl';
 const ROUTE_ICON: Record<AppRoute, typeof FileText> = {
   upload: FileText,
   requisition: Wallet,
+  planning: Calculator,
 };
 
 export interface AppHeaderProps {

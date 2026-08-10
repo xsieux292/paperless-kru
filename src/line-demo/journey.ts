@@ -25,13 +25,19 @@ export type StepId =
   | 'liff-req-items'
   | 'liff-req-approver'
   | 'chat-req-done'
+  // Flow วางแผนงบกิจกรรม (เพิ่มใหม่)
+  | 'liff-plan-tell'
+  | 'liff-plan-info'
+  | 'liff-plan-questions'
+  | 'liff-plan-budget'
+  | 'chat-plan-done'
   // หน้าอื่น ๆ ที่เปิดจาก Rich Menu ได้ตลอด
   | 'liff-jobs'
   | 'liff-pending'
   | 'liff-howto'
   | 'liff-portfolio';
 
-export type FlowId = 'docdone' | 'upload' | 'requisition' | 'teachgrow';
+export type FlowId = 'docdone' | 'upload' | 'requisition' | 'planning' | 'teachgrow';
 
 export interface StepScript {
   id: StepId;
@@ -52,6 +58,7 @@ export const FLOW_LABEL: Record<FlowId, string> = {
   docdone: 'ถ่ายใบเสร็จ → ลงบัญชี → เซ็นอนุมัติ',
   upload: 'ส่งเอกสารให้ AI ทำแทน',
   requisition: 'เบิกงบ / ยืมพัสดุ',
+  planning: 'วางแผนงบกิจกรรม',
   teachgrow: 'แฟ้มสะสมงาน ว.PA',
 };
 
@@ -298,6 +305,73 @@ export const STEPS: Record<StepId, StepScript> = {
     cue: 'แตะช่อง “งานของฉัน” เพื่อดูใบเบิกที่เพิ่งส่ง',
   },
 
+  /* ---------------- Flow: วางแผนงบกิจกรรม ---------------- */
+  'liff-plan-tell': {
+    id: 'liff-plan-tell',
+    flow: 'planning',
+    label: 'เล่าให้ AI ฟัง 1 บรรทัด',
+    what: 'ครูพิมพ์สั้น ๆ ว่าจะจัดกิจกรรมอะไร กี่คน เมื่อไร แค่บรรทัดเดียว',
+    why: [
+      'ของเดิมเปิดมาเจอช่องว่างเต็มจอ ซึ่งไม่ต่างจากกรอกใบขออนุมัติกระดาษ',
+      'AI เดาชื่อกิจกรรม จำนวนคน สถานที่ ระยะเวลา และวันที่ให้จากประโยคเดียว',
+      'ครูยังกดกรอกเองทีละช่องได้ ถ้าอยากคุมทุกอย่างเอง',
+    ],
+    principles: ['⑥ AI ทำก่อน ครูแค่ตรวจ', '⑧ ใช้ภาษาที่ครูคุ้นเคย'],
+    cue: 'แตะตัวอย่างสักอัน แล้วกดปุ่มเขียว',
+  },
+
+  'liff-plan-info': {
+    id: 'liff-plan-info',
+    flow: 'planning',
+    label: 'ตรวจข้อมูลที่ AI เติม',
+    what: 'ช่องต่าง ๆ ถูกเติมมาจากประโยคที่ครูเล่าไว้แล้ว ครูแค่ดูว่าถูกไหม',
+    why: [
+      'มีแถบเขียว “AI เติมให้แล้วค่ะ” บอกชัดว่าค่าพวกนี้มาจาก AI ไม่ใช่ครูพิมพ์เอง',
+      'แก้ได้ทุกช่องทันที ไม่ต้องกดเข้าโหมดแก้ไขก่อน',
+      'ช่องที่ AI เดาไม่ได้จะเว้นว่างไว้ ครูเติมเฉพาะช่องนั้นพอ',
+    ],
+    principles: ['⑥ AI ทำก่อน ครูแค่ตรวจ', '⑧ ใช้ภาษาที่ครูคุ้นเคย'],
+    cue: 'ตรวจแล้วกด “ถูกต้องแล้ว ไปต่อ”',
+  },
+
+  'liff-plan-questions': {
+    id: 'liff-plan-questions',
+    flow: 'planning',
+    label: 'AI ถามเพิ่มเติม',
+    what: 'AI ถามคำถามทีละข้อเพื่อเก็บรายละเอียดเฉพาะเจาะจงที่จำเป็นต่อการตั้งงบ',
+    why: [
+      'ถามทีละข้อแบบ swipe/step ให้ไม่รู้สึกว่าต้องตอบเยอะ',
+      'บอกเหตุผลทุกข้อว่า "AI ควรอันนี้ไปทำไม" ครูจะยอมตอบมากกว่า',
+    ],
+    principles: ['⑥ AI ทำก่อน ครูแค่ตรวจ', '④ ไอคอน + ข้อความ'],
+    cue: 'ตอบคำถามแล้วกด “ข้อต่อไป” จนครบ',
+  },
+
+  'liff-plan-budget': {
+    id: 'liff-plan-budget',
+    flow: 'planning',
+    label: 'ร่างรายการงบ',
+    what: 'AI แสดงตารางรายการงบประมาณที่คาดว่าต้องใช้ พร้อมบอกว่าของชิ้นไหนโรงเรียนน่าจะมี',
+    why: [
+      'ครูเห็นภาพรวมทันทีว่าเงินพอไหม และต้องติดต่อฝ่ายไหนบ้าง',
+      'มีปุ่ม "สร้างใบเบิกจากแผนนี้" ส่งต่อให้ระบบเบิกงบได้เลย',
+    ],
+    principles: ['⑥ AI ทำก่อน ครูแค่ตรวจ'],
+    cue: 'กด “สร้างใบเบิกจากแผนนี้”',
+  },
+
+  'chat-plan-done': {
+    id: 'chat-plan-done',
+    flow: 'planning',
+    label: 'ส่งข้อมูลไปสร้างใบเบิก',
+    what: 'ระบบส่งข้อมูลทั้งหมดไปร่างใบเบิกให้ในแชท',
+    why: [
+      'เชื่อม 2 ระบบเข้าด้วยกัน Planning -> Requisition',
+    ],
+    principles: ['ข้อ 7 Microcopy — บอกว่าเกิดอะไรต่อ'],
+    cue: 'ดูใบเบิกที่ AI ร่างให้',
+  },
+
   /* ---------------- หน้าที่เปิดได้ตลอด ---------------- */
   'liff-jobs': {
     id: 'liff-jobs',
@@ -374,5 +448,12 @@ export const FLOW_SEQUENCE: Record<FlowId, StepId[]> = {
     'liff-jobs',
   ],
   requisition: ['liff-req-tell', 'liff-req-review', 'chat-req-done'],
+  planning: [
+    'liff-plan-tell',
+    'liff-plan-info',
+    'liff-plan-questions',
+    'liff-plan-budget',
+    'chat-plan-done',
+  ],
   teachgrow: ['liff-portfolio'],
 };

@@ -42,4 +42,10 @@ export const endpoints = {
     dailySummary: () => '/ai/daily-summary',
     portfolioCaption: () => '/ai/portfolio-caption',
   },
+  /** วางแผนงบกิจกรรม — AI ช่วยถามเพิ่มเติมและสร้างรายการงบ */
+  activityPlanning: {
+    questions: () => '/ai/activity-planning/questions',
+    draft: () => '/ai/activity-planning/draft',
+    budget: () => '/ai/activity-planning/budget',
+  },
 } as const;

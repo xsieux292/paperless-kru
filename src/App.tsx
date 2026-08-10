@@ -1,6 +1,7 @@
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { RequisitionPage } from '@/pages/RequisitionPage';
 import { UploadPortalPage } from '@/pages/UploadPortalPage';
+import { ActivityPlanningPage } from '@/pages/ActivityPlanningPage';
 import { useRoute } from '@/routes';
 import { AccessibilityProvider } from '@/providers/AccessibilityProvider';
 import { QueryProvider } from '@/providers/QueryProvider';
@@ -23,9 +24,8 @@ export default function App() {
 function RoutedPages() {
   const [route, navigate] = useRoute();
 
-  return route === 'requisition' ? (
-    <RequisitionPage route={route} onNavigate={navigate} />
-  ) : (
-    <UploadPortalPage route={route} onNavigate={navigate} />
-  );
+  if (route === 'planning')
+    return <ActivityPlanningPage route={route} onNavigate={navigate} />;
+  if (route === 'requisition') return <RequisitionPage route={route} onNavigate={navigate} />;
+  return <UploadPortalPage route={route} onNavigate={navigate} />;
 }

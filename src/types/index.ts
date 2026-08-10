@@ -247,6 +247,69 @@ export interface DailySummary {
   activeJobs: number;
 }
 
+/* ------------------------------------------------------------------ */
+/* วางแผนงบกิจกรรม (ฟังก์ชันจาก inspiration)                            */
+/* ------------------------------------------------------------------ */
+
+/** ข้อมูลกิจกรรมหลักที่ครูกรอกในขั้นแรก */
+export interface ActivityPlanForm {
+  eventName: string;
+  objective: string;
+  eventDate: string;
+  venue: string;
+  durationHours: string;
+  students: string;
+  parents: string;
+  teachers: string;
+  guests: string;
+  budget: string;
+  agenda: string;
+}
+
+/** คำถามที่ AI ถามเพิ่มเติมเพื่อเก็บรายละเอียดสำหรับสร้างรายการงบ */
+export interface PlanningQuestion {
+  id: string;
+  label: string;
+  reason: string;
+  placeholder: string;
+  type: 'number' | 'text';
+  suffix?: string;
+}
+
+/** สถานะทรัพยากรของโรงเรียนต่อรายการงบ */
+export type ResourceAvailability = 'โรงเรียนไม่มี' | 'อาจจะมี' | 'มีแน่นอน';
+
+/** รายการงบเบื้องต้นที่ AI สร้างให้ พร้อมราคาอ้างอิงและผู้รับผิดชอบ */
+export interface BudgetPlanItem {
+  availability: ResourceAvailability;
+  item: string;
+  quantity: string;
+  reference: string;
+  amount: number;
+  source: string;
+  owner: string;
+}
+
+/** ระดับความมั่นใจ 4 มิติ ของ AI ในการสร้างรายการงบ */
+export interface PlanConfidence {
+  /** ความครอบคลุมของรายการ */
+  coverage: number;
+  /** ความถูกต้องของจำนวนผู้เข้าร่วม */
+  people: number;
+  /** ความน่าเชื่อถือของราคาอ้างอิง */
+  prices: number;
+  /** ความชัดเจนของทรัพย์สินที่โรงเรียนมี */
+  assets: number;
+}
+
+/** ผลลัพธ์ทั้งหมดของการวางแผนงบกิจกรรม */
+export interface ActivityBudgetPlan {
+  items: BudgetPlanItem[];
+  confidence: PlanConfidence;
+  overallConfidence: number;
+  ready: boolean;
+}
+
 /** รูปแบบ response มาตรฐานที่ตกลงกับ backend */
 export interface ApiEnvelope<T> {
   data: T;

@@ -1,6 +1,11 @@
 import type {
+  ActivityBudgetPlan,
+  ActivityPlanForm,
+  BudgetPlanItem,
   DocumentDetection,
   DocumentMode,
+  PlanConfidence,
+  PlanningQuestion,
   ReceiptCategoryId,
   RequisitionDraft,
   RequisitionKind,
@@ -254,7 +259,268 @@ export const mockAiAssist = {
       'และสามารถนำผลการดำเนินงานไปพัฒนาการจัดการเรียนรู้ในครั้งต่อไปได้'
     );
   },
+
+  /**
+   * คำถามเพิ่มเติมที่ AI ถามครูเพื่อสร้างรายการงบที่แม่นยำขึ้น
+   * ย้ายมาจาก inspiration/App.tsx — ชุดเดียวกันไม่ว่าจะใช้บนเว็บหรือ LINE
+   */
+  /**
+   * เดาข้อมูลกิจกรรมจากประโยคเดียวที่ครูเล่ามา
+   * เพื่อไม่ให้ครูต้องเจอช่องว่าง 11 ช่องตอนเปิดหน้ามา
+   */
+  async draftActivityPlan(description: string): Promise<Partial<ActivityPlanForm>> {
+    await delay(1500);
+
+    const text = description.trim();
+    const draft: Partial<ActivityPlanForm> = {};
+
+    // ชื่อกิจกรรม — ตัดคำบอกจำนวน/สถานที่/เวลาออกให้เหลือแต่ชื่อ
+    draft.eventName = text
+      .replace(/\s*(นักเรียน|ครู|ผู้ปกครอง|แขก)\s*\d+\s*คน.*/, '')
+      .replace(/\s*(จัดที่|ที่)\s*\S+.*/, '')
+      .replace(/\s*งบ\s*[\d,]+.*/, '')
+      .trim()
+      .slice(0, 80);
+
+    // จำนวนคนแต่ละกลุ่ม
+    const pick = (label: string) => {
+      const match = text.match(new RegExp(`${label}\\s*([\\d,]+)\\s*คน`));
+      return match?.[1]?.replace(/,/g, '');
+    };
+    draft.students = pick('นักเรียน') ?? '';
+    draft.teachers = pick('ครู') ?? '';
+    draft.parents = pick('ผู้ปกครอง') ?? '';
+    draft.guests = pick('แขก') ?? '';
+
+    // ถ้าไม่ได้บอกกลุ่มไหนเลย แต่บอก "N คน" ลอย ๆ ให้ถือว่าเป็นนักเรียน
+    if (!draft.students && !draft.teachers && !draft.parents && !draft.guests) {
+      const loose = text.match(/([\d,]+)\s*คน/);
+      if (loose?.[1]) draft.students = loose[1].replace(/,/g, '');
+    }
+
+    // วงเงิน
+    const budget = text.match(/งบ\s*([\d,]+)/);
+    if (budget?.[1]) draft.budget = budget[1].replace(/,/g, '');
+
+    // สถานที่
+    const venue = text.match(/(?:จัดที่|ที่)\s*([^\s,]+)/);
+    if (venue?.[1]) draft.venue = venue[1];
+
+    // ระยะเวลา
+    if (has(text, ['ทั้งวัน', 'เต็มวัน'])) draft.durationHours = '6';
+    else if (has(text, ['ครึ่งวัน'])) draft.durationHours = '3';
+    else {
+      const hours = text.match(/([\d]+)\s*ชั่วโมง/);
+      if (hours?.[1]) draft.durationHours = hours[1];
+    }
+
+    // วันที่ — ถ้าไม่ได้บอก ตั้งเป็นอีก 14 วันให้พอมีเวลาเตรียม
+    const target = new Date();
+    target.setDate(target.getDate() + (has(text, ['พรุ่งนี้']) ? 1 : 14));
+    draft.eventDate = target.toISOString().split('T')[0] ?? '';
+
+    draft.objective = `เพื่อจัด${draft.eventName || 'กิจกรรม'}ให้บรรลุตามเป้าหมายของโรงเรียน`;
+
+    return draft;
+  },
+
+  async getActivityPlanningQuestions(): Promise<PlanningQuestion[]> {
+    await delay(400);
+    return ACTIVITY_PLANNING_QUESTIONS;
+  },
+
+  /**
+   * สร้างรายการงบเบื้องต้นจากข้อมูลกิจกรรม + คำตอบเพิ่มเติม
+   * Logic ย้ายมาจาก inspiration/App.tsx — คำนวณจาก attendees, answers, ราคาอ้างอิง
+   */
+  async generateActivityBudget(
+    form: ActivityPlanForm,
+    answers: Record<string, string>,
+  ): Promise<ActivityBudgetPlan> {
+    await delay(1200);
+
+    const attendees = [form.students, form.parents, form.teachers, form.guests]
+      .map((value) => Number(value) || 0)
+      .reduce((sum, value) => sum + value, 0);
+
+    const snackCount = Math.max(0, Number(answers.snacks) || attendees);
+    const audioText = (answers.audio || '').toLowerCase();
+    const hasAudio =
+      audioText.includes('มีเครื่องเสียง') && !audioText.includes('ไม่มีเครื่องเสียง');
+    const hasProjector =
+      audioText.includes('โปรเจกเตอร์') && !audioText.includes('ไม่มีโปรเจกเตอร์');
+    const needsExtraChairs = Number(answers.elderly || 0) > 0;
+
+    const fmt = (n: number) => n.toLocaleString('th-TH');
+
+    const items: BudgetPlanItem[] = [
+      {
+        availability: 'โรงเรียนไม่มี',
+        item: 'อาหารว่าง',
+        quantity: `${fmt(snackCount)} ชุด`,
+        reference: '35 บาท/ชุด',
+        amount: snackCount * 35,
+        source: 'ราคา AI เบื้องต้น • ต้องแนบใบเสนอราคา',
+        owner: 'ฝ่ายโภชนาการ',
+      },
+      {
+        availability: 'โรงเรียนไม่มี',
+        item: 'น้ำดื่ม',
+        quantity: `${fmt(attendees)} ขวด`,
+        reference: '8 บาท/ขวด',
+        amount: attendees * 8,
+        source: 'ราคา AI เบื้องต้น • ต้องแนบใบเสนอราคา',
+        owner: 'ฝ่ายพัสดุ',
+      },
+      {
+        availability: 'โรงเรียนไม่มี',
+        item: 'พวงมาลัยสำหรับตัวแทนแม่',
+        quantity: '10 พวง',
+        reference: '250 บาท/พวง',
+        amount: 2500,
+        source: 'ราคา AI เบื้องต้น • ต้องสำรวจร้านค้า',
+        owner: 'ฝ่ายพิธีการ',
+      },
+      {
+        availability: 'อาจจะมี',
+        item: 'วัสดุตกแต่งเวทีและฉากหลัง',
+        quantity: '1 งาน',
+        reference: '4,500 บาท/งาน',
+        amount: 4500,
+        source: 'รอตรวจคลังและเปรียบเทียบราคา',
+        owner: 'ฝ่ายอาคารสถานที่',
+      },
+      {
+        availability: hasAudio ? 'มีแน่นอน' : 'อาจจะมี',
+        item: 'ชุดเครื่องเสียงและไมโครโฟน',
+        quantity: '1 ชุด',
+        reference: 'ค่าเช่าทดแทน 8,500 บาท',
+        amount: hasAudio ? 0 : 8500,
+        source: hasAudio ? 'ข้อมูลผู้ใช้ • รอทดสอบก่อนวันงาน' : 'รอฝ่ายโสตฯ ตรวจสอบ',
+        owner: 'ฝ่ายโสตทัศนูปกรณ์',
+      },
+      {
+        availability: hasProjector ? 'มีแน่นอน' : 'อาจจะมี',
+        item: 'โปรเจกเตอร์และจอภาพ',
+        quantity: '1 ชุด',
+        reference: 'ค่าเช่าทดแทน 4,000 บาท',
+        amount: hasProjector ? 0 : 4000,
+        source: hasProjector ? 'ข้อมูลผู้ใช้ • รอยืนยันสภาพ' : 'รอฝ่ายโสตฯ ตรวจสอบ',
+        owner: 'ฝ่ายโสตทัศนูปกรณ์',
+      },
+      {
+        availability: 'อาจจะมี',
+        item: needsExtraChairs ? 'ที่นั่งสำรองสำหรับผู้สูงอายุ' : 'โต๊ะและเก้าอี้',
+        quantity: needsExtraChairs
+          ? `${fmt(Number(answers.elderly))} ที่นั่ง`
+          : `${fmt(attendees)} ที่นั่ง`,
+        reference: 'ค่าเช่าทดแทน 20 บาท/ที่นั่ง',
+        amount: 0,
+        source: 'รอตรวจจำนวนในคลัง',
+        owner: 'ฝ่ายอาคารสถานที่',
+      },
+      {
+        availability: 'อาจจะมี',
+        item: 'ชุดปฐมพยาบาลประจำจุด',
+        quantity: '1 ชุด',
+        reference: '1,000 บาท/ชุด',
+        amount: 1000,
+        source: 'รอตรวจของคงเหลือห้องพยาบาล',
+        owner: 'ครูพยาบาล',
+      },
+    ];
+
+    // คำนวณ confidence จาก quality ของคำตอบ
+    const answeredQuestions = ACTIVITY_PLANNING_QUESTIONS.filter(
+      (q) => answers[q.id] !== undefined,
+    );
+    const qualityPoints = answeredQuestions.reduce(
+      (sum, q) => sum + answerQuality(answers[q.id] || '', q.type),
+      0,
+    );
+
+    const overallConfidence = Math.min(94, Math.round(50 + qualityPoints * 6));
+    const ready = overallConfidence >= 85;
+
+    const confidence: PlanConfidence = {
+      coverage: Math.min(96, Math.round(58 + qualityPoints * 5)),
+      people: Math.min(98, 72 + (answers.snacks ? 14 : 0) + (answers.elderly ? 8 : 0)),
+      prices: Math.min(66, 26 + answeredQuestions.length * 4),
+      assets: Math.min(
+        92,
+        30 + (answers.audio ? answerQuality(answers.audio, 'text') * 50 : 0),
+      ),
+    };
+
+    return { items, confidence, overallConfidence, ready };
+  },
 };
 
-export const approverIdFor = (total: number) => guessApprover(total).id;
-export { formatThaiDate };
+/* ------------------------------------------------------------------ */
+/* Activity Planning — คำถามและ helper functions                       */
+/* ------------------------------------------------------------------ */
+
+
+const ACTIVITY_PLANNING_QUESTIONS: PlanningQuestion[] = [
+  {
+    id: 'performances',
+    label: 'มีการแสดงบนเวทีกี่ชุด และแต่ละชุดใช้เวลาประมาณกี่นาที?',
+    reason: 'ใช้ประเมินเวลาเวที ทีมควบคุมเสียง และอุปกรณ์ที่ต้องเตรียม',
+    placeholder: 'เช่น 5 ชุด ชุดละประมาณ 8 นาที',
+    type: 'text',
+  },
+  {
+    id: 'audio',
+    label: 'กรุณาอธิบายเครื่องเสียงและอุปกรณ์ภาพที่โรงเรียนมีอยู่ พร้อมสภาพการใช้งาน',
+    reason: 'ช่วยแยกของที่มีแน่นอน อาจจะมี และของที่ต้องเช่าหรือซื้อ',
+    placeholder: 'เช่น มีเครื่องเสียง 1 ชุด ไมค์ไร้สาย 2 ตัว ยังไม่ได้ทดสอบ โปรเจกเตอร์พร้อมใช้',
+    type: 'text',
+  },
+  {
+    id: 'snacks',
+    label: 'ต้องเตรียมอาหารว่างจริงทั้งหมดกี่ชุด?',
+    reason: 'AI จะใช้ตัวเลขนี้คำนวณงบอาหารโดยตรง',
+    placeholder: '300',
+    type: 'number',
+    suffix: 'ชุด',
+  },
+  {
+    id: 'foodNeeds',
+    label: 'มีข้อจำกัดด้านอาหารหรือความต้องการพิเศษอะไรบ้าง?',
+    reason: 'ใช้เพิ่มอาหารทางเลือกและป้องกันการตกหล่นของผู้เข้าร่วม',
+    placeholder: 'เช่น มังสวิรัติ 8 ชุด แพ้นม 3 ชุด หรือพิมพ์ว่า ไม่มี',
+    type: 'text',
+  },
+  {
+    id: 'elderly',
+    label: 'คาดว่าจะมีผู้สูงอายุหรือผู้ใช้รถเข็นกี่คน?',
+    reason: 'ใช้ตรวจจำนวนที่นั่งพิเศษ ทางเข้า และจุดปฐมพยาบาล',
+    placeholder: '40',
+    type: 'number',
+    suffix: 'คน',
+  },
+  {
+    id: 'accessibility',
+    label: 'สถานที่มีทางลาด จุดพัก และทางออกฉุกเฉินพร้อมหรือไม่? อธิบายสิ่งที่ยังขาด',
+    reason: 'ช่วยให้รายการด้านสถานที่และความปลอดภัยครบถ้วน',
+    placeholder: 'เช่น มีทางลาดและทางออกฉุกเฉิน แต่ต้องเพิ่มเก้าอี้บริเวณทางเข้า 12 ตัว',
+    type: 'text',
+  },
+  {
+    id: 'decoration',
+    label: 'ต้องการรูปแบบเวที ฉากหลัง และการตกแต่งระดับใด?',
+    reason: 'ใช้กำหนดปริมาณวัสดุและแยกสิ่งที่โรงเรียนทำเองได้',
+    placeholder: 'เช่น เวทีแบบมาตรฐาน ใช้โครงฉากเดิมของโรงเรียน ซื้อเฉพาะดอกไม้และงานพิมพ์',
+    type: 'text',
+  },
+];
+
+function answerQuality(value: string, type: PlanningQuestion['type']): number {
+  const clean = value.trim();
+  if (!clean) return 0;
+  if (type === 'number') return Number(clean) >= 0 ? 1 : 0;
+  if (/ไม่รู้|ไม่แน่ใจ|ยังไม่ทราบ|ยังไม่สรุป/.test(clean)) return 0.35;
+  if (clean.length < 8) return 0.6;
+  return 1;
+}
+

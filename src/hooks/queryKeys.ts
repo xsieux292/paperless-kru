@@ -22,4 +22,5 @@ export const queryKeys = {
     all: ['requisitions'] as const,
     list: () => [...queryKeys.requisitions.all, 'list'] as const,
   },
+  planningQuestions: ['planning-questions'] as const,
 };

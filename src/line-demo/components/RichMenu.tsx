@@ -1,6 +1,6 @@
 import {
   BarChart3,
-  Calendar,
+  Calculator,
   Camera,
   ChevronDown,
   ChevronLeft,
@@ -47,6 +47,7 @@ export interface RichMenuProps {
   onTapRequisition: () => void;
   onTapJobs: () => void;
   onTapHowTo: () => void;
+  onTapPlanning: () => void;
   onTapPortfolio: () => void;
   onTapUnavailable: (label: string) => void;
   pendingSignatures: number;
@@ -63,6 +64,7 @@ export function RichMenu({
   onTapRequisition,
   onTapJobs,
   onTapHowTo,
+  onTapPlanning,
   onTapPortfolio,
   onTapUnavailable,
   pendingSignatures,
@@ -71,7 +73,7 @@ export function RichMenu({
 }: RichMenuProps) {
   const docDoneCells: Cell[] = [
     { icon: Camera, label: 'ถ่ายใบเสร็จ', featured: true, onTap: onTapCamera },
-    { icon: FileText, label: 'ส่งเอกสารให้ AI', onTap: onTapUpload },
+    { icon: Calculator, label: 'วางแผนงบกิจกรรม', onTap: onTapPlanning },
     { icon: PenLine, label: 'รอฉันเซ็น', badge: pendingSignatures, onTap: onTapPendingSign },
     { icon: Wallet, label: 'เบิกงบ / ยืมพัสดุ', onTap: onTapRequisition },
     { icon: FolderOpen, label: 'งานของฉัน', onTap: onTapJobs },
@@ -79,7 +81,7 @@ export function RichMenu({
 
   const teachGrowCells: Cell[] = [
     { icon: FolderOpen, label: 'แฟ้ม ว.PA', featured: true, onTap: onTapPortfolio },
-    { icon: Calendar, label: 'แผนการสอน', onTap: () => onTapUnavailable('แผนการสอน') },
+    { icon: FileText, label: 'ส่งเอกสารให้ AI', onTap: onTapUpload },
     { icon: Trophy, label: 'งานแข่ง / อบรม', onTap: () => onTapUnavailable('งานแข่ง / อบรม') },
     { icon: BarChart3, label: 'ผลนักเรียน', onTap: () => onTapUnavailable('ผลนักเรียน') },
     { icon: CircleHelp, label: 'วิธีใช้งาน', onTap: onTapHowTo },

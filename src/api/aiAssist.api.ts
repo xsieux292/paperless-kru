@@ -1,5 +1,10 @@
 import { env } from '@/config/env';
-import type { DailySummary, DocumentDetection, RequisitionDraft } from '@/types';
+import type {
+  ActivityPlanForm,
+  DailySummary,
+  DocumentDetection,
+  RequisitionDraft,
+} from '@/types';
 import { http } from './http';
 import { endpoints } from './endpoints';
 import { mockAiAssist } from './mock/mockAiAssist';
@@ -44,4 +49,14 @@ export async function writePortfolioCaption(shortText: string): Promise<string> 
     text: shortText,
   });
   return result.caption;
+}
+
+/** เดาข้อมูลกิจกรรมจากประโยคเดียว เพื่อเติมฟอร์มวางแผนงบให้ครู */
+export async function draftActivityPlan(
+  description: string,
+): Promise<Partial<ActivityPlanForm>> {
+  if (env.useMock) return mockAiAssist.draftActivityPlan(description);
+  return http.post<Partial<ActivityPlanForm>>(endpoints.activityPlanning.draft(), {
+    description,
+  });
 }
