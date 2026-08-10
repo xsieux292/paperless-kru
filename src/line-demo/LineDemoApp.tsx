@@ -34,7 +34,6 @@ import {
   PlanningBudgetScreen,
   PlanningInfoScreen,
   PlanningQuestionsScreen,
-  PlanningTellScreen,
 } from './screens/ActivityPlanningScreens';
 import {
   AiSuggestSheet,
@@ -497,7 +496,7 @@ export function LineDemoApp() {
                 onTapRequisition={() => openMenuScreen('liff-req-tell')}
                 onTapJobs={() => openMenuScreen('liff-jobs')}
                 onTapHowTo={() => openMenuScreen('liff-howto')}
-                onTapPlanning={() => openMenuScreen('liff-plan-tell')}
+                onTapPlanning={() => openMenuScreen('liff-plan-info')}
                 onTapPortfolio={() => openMenuScreen('liff-portfolio')}
                 onTapUnavailable={(label) =>
                   setToast(`“${label}” อยู่ใน Phase 2 ของแผนพัฒนา ยังไม่ได้ทำใน prototype นี้ค่ะ`)
@@ -847,61 +846,18 @@ export function LineDemoApp() {
             )}
 
             {/* ---------- Flow: วางแผนงบกิจกรรม ---------- */}
-            {stepId === 'liff-plan-tell' && (
-              <LiffSheet
-                title="วางแผนงบกิจกรรม"
-                step={{ current: 1, total: 4 }}
-                onBack={closeLiff}
-                onClose={closeLiff}
-                footer={
-                  <div className="space-y-2">
-                    <LiffPrimaryButton
-                      onClick={() =>
-                        planDrafting.mutate(planDescription, {
-                          onSuccess: (draft) => {
-                            setPlanForm((prev) => ({ ...prev, ...draft }));
-                            setPlanPrefilled(true);
-                            goTo('liff-plan-info');
-                          },
-                          onError: (error) => setToast(toFriendlyMessage(error)),
-                        })
-                      }
-                      disabled={!planDescription.trim()}
-                      loading={planDrafting.isPending}
-                      loadingText="AI กำลังเติมข้อมูลให้…"
-                      icon={<Sparkles className="h-5 w-5" aria-hidden />}
-                    >
-                      ให้ AI เติมข้อมูลให้
-                    </LiffPrimaryButton>
-                    <button
-                      type="button"
-                      onClick={() => goTo('liff-plan-info')}
-                      className="h-11 w-full rounded-btn text-[13px] font-bold text-ink-light"
-                    >
-                      หรือกรอกเองทีละช่อง
-                    </button>
-                  </div>
-                }
-              >
-                <PlanningTellScreen
-                  description={planDescription}
-                  onDescriptionChange={setPlanDescription}
-                />
-              </LiffSheet>
-            )}
-
             {stepId === 'liff-plan-info' && (
               <LiffSheet
-                title="ตรวจข้อมูลกิจกรรม"
-                step={{ current: 2, total: 4 }}
-                onBack={() => goTo('liff-plan-tell')}
+                title="วางแผนงบกิจกรรม"
+                step={{ current: 1, total: 3 }}
+                onBack={closeLiff}
                 onClose={closeLiff}
                 footer={
                   <LiffPrimaryButton
                     onClick={() => goTo('liff-plan-questions')}
                     disabled={!planForm.eventName.trim()}
                   >
-                    {planForm.eventName.trim() ? 'ถูกต้องแล้ว ไปต่อ' : 'ใส่ชื่อกิจกรรมก่อน'}
+                    {planForm.eventName.trim() ? 'ถัดไป — ให้ AI ถามเพิ่ม' : 'ใส่ชื่อกิจกรรมก่อน'}
                   </LiffPrimaryButton>
                 }
               >
@@ -911,6 +867,19 @@ export function LineDemoApp() {
                   onFormChange={(field, value) =>
                     setPlanForm((prev) => ({ ...prev, [field]: value }))
                   }
+                  description={planDescription}
+                  onDescriptionChange={setPlanDescription}
+                  isPrefilling={planDrafting.isPending}
+                  onAiPrefill={() =>
+                    planDrafting.mutate(planDescription, {
+                      onSuccess: (draft) => {
+                        setPlanForm((prev) => ({ ...prev, ...draft }));
+                        setPlanPrefilled(true);
+                        setToast('AI เติมข้อมูลให้แล้วค่ะ เลื่อนขึ้นไปตรวจด้านบนได้เลย');
+                      },
+                      onError: (error) => setToast(toFriendlyMessage(error)),
+                    })
+                  }
                 />
               </LiffSheet>
             )}
@@ -918,7 +887,7 @@ export function LineDemoApp() {
             {stepId === 'liff-plan-questions' && (
               <LiffSheet
                 title="AI เก็บรายละเอียด"
-                step={{ current: 3, total: 4 }}
+                step={{ current: 2, total: 3 }}
                 onBack={() => goTo('liff-plan-info')}
                 onClose={closeLiff}
                 footer={
@@ -963,7 +932,7 @@ export function LineDemoApp() {
             {stepId === 'liff-plan-budget' && planGenerated && (
               <LiffSheet
                 title="รายการงบที่ AI คิดให้"
-                step={{ current: 4, total: 4 }}
+                step={{ current: 3, total: 3 }}
                 onBack={() => goTo('liff-plan-questions')}
                 onClose={closeLiff}
                 footer={

@@ -70,8 +70,12 @@ export function ActivityPlanningPage({
         setFormError('');
         toast.success(
           'AI เติมข้อมูลให้แล้วค่ะ',
-          'เลื่อนลงไปดูรายละเอียดด้านล่าง แก้ได้ทุกช่องเลยนะคะ',
+          'เลื่อนขึ้นไปดูในฟอร์มด้านบน แก้ได้ทุกช่องเลยนะคะ',
         );
+        // เลื่อนกลับไปที่ฟอร์มให้เลย ครูจะได้เห็นสิ่งที่ AI เติมทันที
+        document
+          .getElementById('plan-eventName')
+          ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       },
       onError: (error) => toast.error('ยังเติมข้อมูลให้ไม่ได้', toFriendlyMessage(error)),
     });
@@ -79,7 +83,7 @@ export function ActivityPlanningPage({
 
   const submitForm = () => {
     if (!form.eventName.trim()) {
-      setFormError('ยังไม่มีชื่อกิจกรรมค่ะ — เล่าให้ AI ฟังด้านบน หรือกางรายละเอียดมากรอกเองก็ได้');
+      setFormError('ยังไม่มีชื่อกิจกรรมค่ะ — กรอกในฟอร์มด้านบน หรือให้ AI ช่วยกรอกจากกล่องด้านล่างก็ได้');
       return;
     }
     const attendees = [form.students, form.parents, form.teachers, form.guests]
@@ -163,8 +167,8 @@ export function ActivityPlanningPage({
         <section className="mb-6 rounded-2xl bg-primary-600 px-5 py-5 text-white sm:px-6">
           <h2 className="font-display text-xl font-bold sm:text-2xl">วางแผนงบกิจกรรม</h2>
           <p className="mt-1 text-base text-primary-50">
-            เล่าให้ AI ฟังว่าจะจัดกิจกรรมอะไร แล้ว AI จะช่วยคิดว่าต้องใช้อะไรบ้าง เท่าไร
-            พร้อมส่งต่อไปทำใบเบิกได้เลยค่ะ
+            กรอกข้อมูลกิจกรรมด้านล่าง แล้ว AI จะช่วยคิดว่าต้องใช้อะไรบ้าง เท่าไร
+            พร้อมส่งต่อไปทำใบเบิกได้เลยค่ะ — ถ้าไม่อยากกรอกเอง ให้ AI ช่วยกรอกได้ที่ท้ายฟอร์ม
           </p>
         </section>
 

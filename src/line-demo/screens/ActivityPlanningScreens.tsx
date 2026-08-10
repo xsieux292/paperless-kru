@@ -18,83 +18,30 @@ const EXAMPLES = [
 ];
 
 /* ------------------------------------------------------------------ */
-/* ขั้นที่ 1 — เล่าให้ AI ฟัง แล้ว AI เติมช่องให้                        */
+/* ขั้นที่ 1 — กรอกข้อมูลกิจกรรม (มี AI ช่วยกรอกอยู่ล่างฟอร์ม)          */
 /* ------------------------------------------------------------------ */
 
 /**
- * ขั้นแรกของการวางแผนงบบน LIFF
- *
- * ใช้แนวเดียวกับหน้าเบิกงบ: ให้ครูเล่าสั้น ๆ 1 บรรทัดเป็นทางหลัก
- * แล้ว AI เติมช่องให้ ครูค่อยตรวจ — ไม่ใช่ให้เจอช่องว่างเต็มจอ
+ * ลำดับบนจอ: ฟอร์มกรอกเองอยู่บน แล้วค่อยเป็นกล่อง "ให้ AI ช่วยกรอก" ด้านล่าง
+ * ครูที่รู้ข้อมูลอยู่แล้วกรอกได้เลย ไม่ต้องเลื่อนผ่าน AI ก่อน
  */
-export function PlanningTellScreen({
-  description,
-  onDescriptionChange,
-}: {
-  description: string;
-  onDescriptionChange: (value: string) => void;
-}) {
-  return (
-    <div className="space-y-3">
-      <div className="flex items-start gap-2.5">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-700">
-          <Sparkles className="h-5 w-5" aria-hidden />
-        </span>
-        <div>
-          <h2 className="font-display text-[16px] font-bold leading-snug text-ink">
-            จะจัดกิจกรรมอะไรคะ?
-          </h2>
-          <p className="mt-0.5 text-[12px] leading-relaxed text-ink-light">
-            เล่าสั้น ๆ พอค่ะ AI จะช่วยคิดว่าต้องใช้อะไรบ้าง เท่าไร
-          </p>
-        </div>
-      </div>
-
-      <textarea
-        rows={3}
-        value={description}
-        onChange={(event) => onDescriptionChange(event.target.value)}
-        placeholder="เช่น ค่ายวิชาการคณิต นักเรียน 120 คน ทั้งวัน"
-        className={textareaClass}
-        aria-label="เล่าเกี่ยวกับกิจกรรม"
-      />
-
-      <p className="flex items-center gap-1.5 text-[12px] text-ink-light">
-        <Mic className="h-4 w-4 shrink-0" aria-hidden />
-        พิมพ์ไม่สะดวก ใช้ปุ่มไมค์บนแป้นพิมพ์พูดใส่ได้เลยค่ะ
-      </p>
-
-      <div>
-        <p className="mb-1.5 text-[12px] font-semibold text-ink-light">หรือแตะตัวอย่างนี้ก็ได้</p>
-        <div className="flex flex-wrap gap-2">
-          {EXAMPLES.map((example) => (
-            <button
-              key={example}
-              type="button"
-              onClick={() => onDescriptionChange(example)}
-              className="min-h-[40px] rounded-btn border border-slate-300 bg-white px-3 text-[12px] text-ink"
-            >
-              {example}
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* ขั้นที่ 2 — ตรวจข้อมูลที่ AI เติมให้                                 */
-/* ------------------------------------------------------------------ */
 export function PlanningInfoScreen({
   form,
   onFormChange,
   prefilled,
+  description,
+  onDescriptionChange,
+  onAiPrefill,
+  isPrefilling,
 }: {
   form: ActivityPlanForm;
   onFormChange: (field: keyof ActivityPlanForm, value: string) => void;
   /** AI เติมให้แล้วหรือกรอกเอง — ใช้เลือกข้อความหัวเรื่อง */
   prefilled: boolean;
+  description: string;
+  onDescriptionChange: (value: string) => void;
+  onAiPrefill: () => void;
+  isPrefilling: boolean;
 }) {
   const attendees = [form.students, form.parents, form.teachers, form.guests]
     .map((value) => Number(value) || 0)
@@ -194,6 +141,63 @@ export function PlanningInfoScreen({
           รวม {baht(attendees)} คน
         </p>
       </fieldset>
+
+      {/* ---------- ทางลัด: ให้ AI กรอกให้แทน — อยู่ล่างฟอร์ม ---------- */}
+      <div className="rounded-xl border-2 border-primary-200 bg-primary-50 p-3">
+        <div className="mb-2 flex items-start gap-2.5">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-600 text-white">
+            <Sparkles className="h-4 w-4" aria-hidden />
+          </span>
+          <div className="min-w-0">
+            <p className="font-display text-[14px] font-bold text-ink">
+              ไม่อยากกรอกเอง? ให้ AI ช่วยได้ค่ะ
+            </p>
+            <p className="mt-0.5 text-[11px] leading-relaxed text-ink-light">
+              เล่าสั้น ๆ 1 บรรทัด แล้ว AI จะเติมช่องด้านบนให้
+            </p>
+          </div>
+        </div>
+
+        <label htmlFor="p-describe" className="sr-only">
+          เล่าเกี่ยวกับกิจกรรม
+        </label>
+        <textarea
+          id="p-describe"
+          rows={2}
+          value={description}
+          onChange={(event) => onDescriptionChange(event.target.value)}
+          placeholder="เช่น ค่ายวิชาการคณิต นักเรียน 120 คน ทั้งวัน"
+          className={textareaClass}
+        />
+
+        <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-ink-light">
+          <Mic className="h-3.5 w-3.5 shrink-0" aria-hidden />
+          พิมพ์ไม่สะดวก ใช้ปุ่มไมค์บนแป้นพิมพ์พูดใส่ได้เลยค่ะ
+        </p>
+
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {EXAMPLES.map((example) => (
+            <button
+              key={example}
+              type="button"
+              onClick={() => onDescriptionChange(example)}
+              className="min-h-[36px] rounded-btn border border-slate-300 bg-white px-2.5 text-[11px] text-ink"
+            >
+              {example}
+            </button>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          onClick={onAiPrefill}
+          disabled={!description.trim() || isPrefilling}
+          className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-btn bg-primary-600 text-[14px] font-bold text-white transition active:scale-[0.98] disabled:bg-ink-mute"
+        >
+          <Sparkles className="h-5 w-5" aria-hidden />
+          {isPrefilling ? 'AI กำลังเติมข้อมูลให้…' : 'ให้ AI เติมข้อมูลให้'}
+        </button>
+      </div>
     </div>
   );
 }
