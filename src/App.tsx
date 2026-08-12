@@ -1,5 +1,5 @@
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { RequisitionPage } from '@/pages/RequisitionPage';
+import { SupplyRequisitionPage } from '@/pages/SupplyRequisitionPage';
 import { UploadPortalPage } from '@/pages/UploadPortalPage';
 import { ActivityPlanningPage } from '@/pages/ActivityPlanningPage';
 import { useRoute } from '@/routes';
@@ -22,10 +22,17 @@ export default function App() {
 }
 
 function RoutedPages() {
-  const [route, navigate] = useRoute();
+  const [route, navigate, supplyRoute] = useRoute();
 
   if (route === 'planning')
     return <ActivityPlanningPage route={route} onNavigate={navigate} />;
-  if (route === 'requisition') return <RequisitionPage route={route} onNavigate={navigate} />;
+  if (route === 'requisition') {
+    return (
+      <SupplyRequisitionPage
+        route={supplyRoute ?? { name: 'supply-catalog' }}
+        onNavigate={navigate}
+      />
+    );
+  }
   return <UploadPortalPage route={route} onNavigate={navigate} />;
 }

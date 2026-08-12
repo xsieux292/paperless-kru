@@ -1,4 +1,4 @@
-import { CircleHelp, FileText, Sparkles, Wallet, Calculator } from 'lucide-react';
+import { Calculator, CircleHelp, FileText, PackageOpen, Sparkles } from 'lucide-react';
 import { useProfile } from '@/hooks/useProfile';
 import { cn } from '@/lib/cn';
 import { ROUTE_LABEL, ROUTE_ORDER, type AppRoute } from '@/routes';
@@ -6,7 +6,7 @@ import { FontSizeControl } from './FontSizeControl';
 
 const ROUTE_ICON: Record<AppRoute, typeof FileText> = {
   upload: FileText,
-  requisition: Wallet,
+  requisition: PackageOpen,
   planning: Calculator,
 };
 
@@ -43,6 +43,7 @@ export function AppHeader({ route, onNavigate, onOpenHelp }: AppHeaderProps) {
           <button
             type="button"
             onClick={onOpenHelp}
+            aria-label="วิธีใช้งาน"
             className="tap-target flex items-center gap-2 rounded-btn border-2 border-primary-600 px-3 font-display text-base font-bold text-primary-700 transition hover:bg-primary-50"
           >
             <CircleHelp className="h-5 w-5" aria-hidden />

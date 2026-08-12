@@ -40,6 +40,21 @@ export const endpoints = {
     suggestItems: () => '/requisitions/suggest-items',
     approvers: () => '/requisitions/approvers',
   },
+  /** ระบบเบิกวัสดุฝั่งครู (แยก contract จากใบเบิกงบ/ยืมพัสดุเดิม) */
+  supplies: {
+    list: () => '/supplies',
+  },
+  supplyRequisitions: {
+    create: () => '/requisitions',
+    publicDetail: (publicToken: string) =>
+      `/requisitions/public/${encodeURIComponent(publicToken)}`,
+    cancel: (publicToken: string) =>
+      `/requisitions/public/${encodeURIComponent(publicToken)}/cancel`,
+    sendOtp: (publicToken: string) =>
+      `/requisitions/public/${encodeURIComponent(publicToken)}/send-otp`,
+    verifyOtp: (publicToken: string) =>
+      `/requisitions/public/${encodeURIComponent(publicToken)}/verify-otp`,
+  },
   /** AI ช่วยร่าง/เดาให้ก่อน เพื่อลดการกรอกของครู */
   ai: {
     draftRequisition: () => '/ai/draft-requisition',
