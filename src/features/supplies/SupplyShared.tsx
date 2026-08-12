@@ -48,17 +48,17 @@ export const statusContent: Record<
 > = {
   draft: { label: 'ร่าง', className: 'bg-slate-100 text-ink', icon: Clock3 },
   pending_stock_check: {
-    label: 'รอเจ้าหน้าที่ตรวจของ',
+    label: 'กำลังรอตรวจ',
     className: 'bg-attention-50 text-attention-800',
     icon: Clock3,
   },
   awaiting_confirmation: {
-    label: 'รอคุณครูยืนยัน',
+    label: 'รอครูยืนยัน',
     className: 'bg-attention-50 text-attention-800',
     icon: AlertCircle,
   },
   ready_for_pickup: {
-    label: 'พร้อมรับของ',
+    label: 'พร้อมรับ',
     className: 'bg-primary-50 text-primary-800',
     icon: PackageCheck,
   },
@@ -68,12 +68,12 @@ export const statusContent: Record<
     icon: XCircle,
   },
   cancelled: {
-    label: 'ยกเลิกแล้ว',
+    label: 'ยกเลิก',
     className: 'bg-danger-50 text-danger-800',
     icon: XCircle,
   },
   expired: {
-    label: 'หมดเวลารับ',
+    label: 'หมดอายุ',
     className: 'bg-danger-50 text-danger-800',
     icon: Clock3,
   },

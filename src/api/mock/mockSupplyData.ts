@@ -1,4 +1,4 @@
-import type { SupplyItem } from '@/types/supply';
+import type { SchoolDocumentTemplate, SupplyItem } from '@/types/supply';
 
 /**
  * ภาพประกอบแบบ data URL ทำให้ prototype ใช้งานได้แม้ไม่มีอินเทอร์เน็ต
@@ -140,3 +140,13 @@ export const mockSupplyItems: readonly SupplyItem[] = [
 export function findMockSupply(supplyId: string): SupplyItem | undefined {
   return mockSupplyItems.find((item) => item.id === supplyId);
 }
+
+/** เปลี่ยนข้อมูลโรงเรียน/ตรา/ปีงบประมาณได้จาก template จุดเดียว */
+export const mockSchoolDocumentTemplate: SchoolDocumentTemplate = {
+  schoolName: 'โรงเรียนเรียนดีวิทยา',
+  schoolAddress: '99 หมู่ 5 ตำบลเรียนดี อำเภอเมือง จังหวัดกรุงเทพมหานคร 10000',
+  fiscalYear: String(new Date().getFullYear() + 543),
+  documentTitle: 'ใบเบิกวัสดุ',
+  verificationBaseUrl: 'https://example.school/documents/verify',
+  version: '1.0',
+};

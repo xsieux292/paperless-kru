@@ -8,6 +8,10 @@ export const mockProfile: TeacherProfile = {
   schoolName: 'โรงเรียนเรียนดีวิทยา',
   email: 'somsri@learnwell.ac.th',
   avatarUrl: null,
+  personnelId: 'T-00142',
+  position: 'ครูชำนาญการ',
+  department: 'กลุ่มสาระการเรียนรู้วิทยาศาสตร์และเทคโนโลยี',
+  phone: '081-234-5678',
 };
 
 const minutesAgo = (minutes: number) => new Date(Date.now() - minutes * 60_000).toISOString();

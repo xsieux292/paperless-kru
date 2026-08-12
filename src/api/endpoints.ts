@@ -46,14 +46,15 @@ export const endpoints = {
   },
   supplyRequisitions: {
     create: () => '/requisitions',
-    publicDetail: (publicToken: string) =>
-      `/requisitions/public/${encodeURIComponent(publicToken)}`,
-    cancel: (publicToken: string) =>
-      `/requisitions/public/${encodeURIComponent(publicToken)}/cancel`,
-    sendOtp: (publicToken: string) =>
-      `/requisitions/public/${encodeURIComponent(publicToken)}/send-otp`,
-    verifyOtp: (publicToken: string) =>
-      `/requisitions/public/${encodeURIComponent(publicToken)}/verify-otp`,
+    mine: () => '/requisitions/mine',
+    detail: (id: string) => `/requisitions/${encodeURIComponent(id)}`,
+    cancel: (id: string) => `/requisitions/${encodeURIComponent(id)}/cancel`,
+    accept: (id: string) => `/requisitions/${encodeURIComponent(id)}/accept`,
+    sendOtp: (id: string) => `/requisitions/${encodeURIComponent(id)}/send-otp`,
+    verifyOtp: (id: string) => `/requisitions/${encodeURIComponent(id)}/verify-otp`,
+    auditEvents: (id: string) => `/requisitions/${encodeURIComponent(id)}/audit-events`,
+    document: (id: string) => `/requisitions/${encodeURIComponent(id)}/document`,
+    verifyDocument: (id: string) => `/requisitions/${encodeURIComponent(id)}/document/verify`,
   },
   /** AI ช่วยร่าง/เดาให้ก่อน เพื่อลดการกรอกของครู */
   ai: {

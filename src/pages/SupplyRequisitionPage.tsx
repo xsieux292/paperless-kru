@@ -7,6 +7,8 @@ import { Modal } from '@/components/ui/Modal';
 import { SupplyCatalog } from '@/features/supplies/SupplyCatalog';
 import { SupplyCartForm } from '@/features/supplies/SupplyCartForm';
 import { SupplyConfirmation } from '@/features/supplies/SupplyConfirmation';
+import { SupplyDocumentPage } from '@/features/supplies/SupplyDocumentPage';
+import { SupplyDocumentVerification } from '@/features/supplies/SupplyDocumentVerification';
 import { SupplyPickup } from '@/features/supplies/SupplyPickup';
 import { SupplyRequests } from '@/features/supplies/SupplyRequests';
 import { SupplyTracking } from '@/features/supplies/SupplyTracking';
@@ -20,6 +22,22 @@ export interface SupplyRequisitionPageProps {
 /** Flow เบิกวัสดุฝั่งครูเท่านั้น — ไม่มีหน้าจอหรือสิทธิ์ของเจ้าหน้าที่ */
 export function SupplyRequisitionPage({ route, onNavigate }: SupplyRequisitionPageProps) {
   const [helpOpen, setHelpOpen] = useState(false);
+
+  if (route.name === 'supply-document') {
+    return <SupplyDocumentPage token={route.token} onNavigate={onNavigate} />;
+  }
+
+  if (route.name === 'supply-document-verify') {
+    return (
+      <div className="min-h-screen bg-surface pb-14">
+        <MockModeBanner />
+        <AppHeader route="requisition" onNavigate={onNavigate} onOpenHelp={() => setHelpOpen(true)} />
+        <main className="mx-auto mt-6 max-w-7xl px-4 sm:px-6 lg:px-8">
+          <SupplyDocumentVerification token={route.token} onNavigate={onNavigate} />
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-surface pb-28 lg:pb-14">
@@ -49,7 +67,7 @@ export function SupplyRequisitionPage({ route, onNavigate }: SupplyRequisitionPa
 function SupplyHelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const steps = [
     { icon: Search, title: '1. เลือกพัสดุ', detail: 'ค้นหารายการและระบุจำนวนที่ต้องการ' },
-    { icon: ShoppingBasket, title: '2. ส่งคำขอ', detail: 'ตรวจตะกร้าและกรอกข้อมูลผู้เบิก' },
+    { icon: ShoppingBasket, title: '2. ส่งคำขอ', detail: 'ตรวจตะกร้า ระบบเติมข้อมูลผู้เบิกจากบัญชีให้อัตโนมัติ' },
     { icon: ClipboardCheck, title: '3. รอผลตรวจ', detail: 'เจ้าหน้าที่จะตรวจของจริงและยืนยันจำนวน' },
     { icon: ShieldCheck, title: '4. ยืนยัน OTP', detail: 'ยอมรับจำนวนและยืนยันตัวตนด้วยรหัส 6 หลัก' },
     { icon: PackageCheck, title: '5. รับพัสดุ', detail: 'นำ QR ไปแสดงที่ห้องพัสดุ' },

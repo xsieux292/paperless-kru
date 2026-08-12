@@ -17,6 +17,11 @@ export interface TeacherProfile {
   schoolName: string;
   email?: string;
   avatarUrl?: string | null;
+  /** ข้อมูลจากระบบบุคลากร ใช้เติมแบบฟอร์มเบิกให้อัตโนมัติ */
+  personnelId?: string;
+  position?: string;
+  department?: string;
+  phone?: string;
 }
 
 /**

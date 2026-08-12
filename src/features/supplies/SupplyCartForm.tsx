@@ -1,13 +1,28 @@
 import { useMemo, useRef, useState, type FormEvent } from 'react';
-import { ArrowLeft, CalendarDays, Send, ShoppingBasket, Trash2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  CalendarDays,
+  CheckCircle2,
+  Edit3,
+  Send,
+  ShoppingBasket,
+  Trash2,
+  UserCheck,
+} from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { FormField, inputClass, textareaClass } from '@/components/ui/FormField';
 import { Modal } from '@/components/ui/Modal';
-import { useCreateSupplyRequisition, useSupplyCart, useSupplyCatalog } from '@/hooks/useSupplyRequisition';
+import {
+  useCreateSupplyRequisition,
+  useSupplyCart,
+  useSupplyCatalog,
+  useSupplyTeacherProfile,
+} from '@/hooks/useSupplyRequisition';
 import { cn } from '@/lib/cn';
 import { useToast } from '@/providers/toastContext';
 import type { SupplyRoute } from '@/routes';
-import type { CreateSupplyRequisitionInput } from '@/types/supply';
+import type { CustomSupplyRequest } from '@/types/supply';
+import { CustomSupplyModal } from './CustomSupplyModal';
 import {
   formatThaiDate,
   getErrorMessage,
@@ -18,7 +33,12 @@ import {
   SupplyPageHeading,
 } from './SupplyShared';
 
-type FormValues = Omit<CreateSupplyRequisitionInput, 'items'>;
+type FormValues = {
+  purpose: string;
+  activityName: string;
+  requestedPickupDate: string;
+  note: string;
+};
 type FieldErrors = Partial<Record<keyof FormValues | 'items', string>>;
 
 function localDateValue(date = new Date()) {
@@ -29,10 +49,8 @@ function localDateValue(date = new Date()) {
 }
 
 const EMPTY_FORM: FormValues = {
-  requesterName: '',
-  department: '',
-  phone: '',
   purpose: '',
+  activityName: '',
   requestedPickupDate: '',
   note: '',
 };
@@ -41,9 +59,11 @@ export function SupplyCartForm({ onNavigate }: { onNavigate: (route: SupplyRoute
   const [values, setValues] = useState<FormValues>(EMPTY_FORM);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [editingCustom, setEditingCustom] = useState<CustomSupplyRequest | undefined>();
   const submittingRef = useRef(false);
-  const { cart, setQuantity, remove, clear } = useSupplyCart();
+  const { cart, setQuantity, saveCustom, remove, clear } = useSupplyCart();
   const catalog = useSupplyCatalog();
+  const profile = useSupplyTeacherProfile();
   const createRequest = useCreateSupplyRequisition();
   const toast = useToast();
   const minimumDate = localDateValue();
@@ -52,11 +72,7 @@ export function SupplyCartForm({ onNavigate }: { onNavigate: (route: SupplyRoute
     () => new Map((catalog.data ?? []).map((item) => [item.id, item])),
     [catalog.data],
   );
-  const cartDetails = cart.map((cartItem) => ({
-    ...cartItem,
-    supply: suppliesById.get(cartItem.supplyId),
-  }));
-  const totalPieces = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const totalPieces = cart.reduce((sum, item) => sum + item.requestedQuantity, 0);
 
   const updateField = (field: keyof FormValues, value: string) => {
     setValues((current) => ({ ...current, [field]: value }));
@@ -65,15 +81,10 @@ export function SupplyCartForm({ onNavigate }: { onNavigate: (route: SupplyRoute
 
   const validate = () => {
     const next: FieldErrors = {};
-    if (cart.length === 0) next.items = 'กรุณาเลือกพัสดุอย่างน้อย 1 รายการ';
-    if (cart.some((item) => item.quantity <= 0)) next.items = 'จำนวนพัสดุต้องมากกว่า 0';
-    if (values.requesterName.trim().length < 2) next.requesterName = 'กรุณากรอกชื่อ–นามสกุล';
-    if (!values.department.trim()) next.department = 'กรุณากรอกกลุ่มสาระหรือฝ่าย';
-    const phoneDigits = values.phone.replace(/\D/g, '');
-    if (phoneDigits.length < 9 || phoneDigits.length > 10) {
-      next.phone = 'กรุณากรอกเบอร์โทรศัพท์ 9–10 หลัก';
-    }
+    if (cart.length === 0) next.items = 'กรุณาเลือกวัสดุอย่างน้อย 1 รายการ';
+    if (cart.some((item) => item.requestedQuantity <= 0)) next.items = 'จำนวนต้องมากกว่า 0';
     if (!values.purpose.trim()) next.purpose = 'กรุณากรอกวัตถุประสงค์ในการใช้งาน';
+    if (!values.activityName.trim()) next.activityName = 'กรุณากรอกชื่องานหรือกิจกรรม';
     if (!values.requestedPickupDate) next.requestedPickupDate = 'กรุณาเลือกวันที่ต้องการรับ';
     else if (values.requestedPickupDate < minimumDate) {
       next.requestedPickupDate = 'วันที่ต้องการรับต้องไม่ย้อนหลัง';
@@ -92,16 +103,15 @@ export function SupplyCartForm({ onNavigate }: { onNavigate: (route: SupplyRoute
   };
 
   const handleConfirm = async () => {
-    if (submittingRef.current) return;
+    if (submittingRef.current || !profile.data) return;
     submittingRef.current = true;
     try {
       const requisition = await createRequest.mutateAsync({
-        ...values,
-        requesterName: values.requesterName.trim(),
-        department: values.department.trim(),
-        phone: values.phone.trim(),
+        teacherProfile: profile.data,
         purpose: values.purpose.trim(),
-        note: values.note?.trim() || undefined,
+        activityName: values.activityName.trim(),
+        requestedPickupDate: values.requestedPickupDate,
+        note: values.note.trim() || undefined,
         items: cart,
       });
       clear();
@@ -115,261 +125,157 @@ export function SupplyCartForm({ onNavigate }: { onNavigate: (route: SupplyRoute
     }
   };
 
-  if (catalog.isLoading) return <LoadingSkeleton cards={2} />;
-  if (catalog.isError) {
+  if (catalog.isLoading || profile.isLoading) return <LoadingSkeleton cards={2} />;
+  if (catalog.isError || profile.isError || !profile.data) {
     return (
       <StatePanel
         tone="danger"
         title="โหลดข้อมูลตะกร้าไม่สำเร็จ"
-        description="ยังไม่สามารถแสดงรายละเอียดพัสดุได้ กรุณาลองใหม่อีกครั้ง"
+        description="ยังไม่สามารถโหลดข้อมูลวัสดุหรือข้อมูลผู้ใช้ที่เข้าสู่ระบบได้"
         actionLabel="โหลดข้อมูลอีกครั้ง"
-        onAction={() => void catalog.refetch()}
+        onAction={() => {
+          void catalog.refetch();
+          void profile.refetch();
+        }}
       />
     );
   }
   if (cart.length === 0) {
     return (
       <>
-        <SupplyPageHeading
-          title="ตะกร้าพัสดุ"
-          description="ตรวจรายการและกรอกข้อมูลผู้เบิกก่อนส่งให้เจ้าหน้าที่ตรวจของ"
-        />
-        <StatePanel
-          icon={ShoppingBasket}
-          title="ตะกร้ายังว่าง"
-          description="เลือกพัสดุอย่างน้อย 1 รายการ แล้วกลับมากรอกข้อมูลผู้เบิกที่หน้านี้"
-          actionLabel="เลือกพัสดุ"
-          onAction={() => onNavigate({ name: 'supply-catalog' })}
-        />
+        <SupplyPageHeading title="ตะกร้าวัสดุ" description="ตรวจรายการก่อนส่งให้เจ้าหน้าที่ตรวจสอบ" />
+        <StatePanel icon={ShoppingBasket} title="ตะกร้ายังว่าง" description="เลือกวัสดุอย่างน้อย 1 รายการ แล้วกลับมาที่หน้านี้" actionLabel="เลือกวัสดุ" onAction={() => onNavigate({ name: 'supply-catalog' })} />
       </>
     );
   }
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => onNavigate({ name: 'supply-catalog' })}
-        className="tap-target mb-3 inline-flex items-center gap-2 rounded-xl px-2 text-base font-bold text-primary-700 hover:bg-primary-50"
-      >
-        <ArrowLeft className="h-5 w-5" aria-hidden />
-        กลับไปเลือกพัสดุ
+      <button type="button" onClick={() => onNavigate({ name: 'supply-catalog' })} className="tap-target mb-3 inline-flex items-center gap-2 rounded-xl px-2 text-base font-bold text-primary-700 hover:bg-primary-50">
+        <ArrowLeft className="h-5 w-5" aria-hidden /> กลับไปเลือกวัสดุ
       </button>
-      <SupplyPageHeading
-        title="ตะกร้าและข้อมูลผู้เบิก"
-        description="ตรวจจำนวนให้เรียบร้อย ข้อมูลในตะกร้าจะยังอยู่เมื่อย้อนกลับหรือรีเฟรชหน้า"
-      />
+      <SupplyPageHeading title="ตรวจตะกร้าและส่งคำขอ" description="ระบบโหลดข้อมูลผู้ขอจากบัญชีที่เข้าสู่ระบบแล้ว คุณครูไม่ต้องกรอกข้อมูลส่วนตัวซ้ำ" />
 
-      <form onSubmit={handleReview} noValidate className="grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(22rem,0.95fr)]">
+      <form onSubmit={handleReview} noValidate className="grid gap-6 lg:grid-cols-[minmax(0,1.08fr)_minmax(22rem,0.92fr)]">
         <section className="card h-fit p-4 sm:p-6" aria-labelledby="cart-items-title">
           <div className="flex items-center justify-between gap-3">
-            <h2 id="cart-items-title" className="font-display text-xl font-bold text-ink">
-              รายการที่เลือก
-            </h2>
+            <h2 id="cart-items-title" className="font-display text-xl font-bold text-ink">รายการที่เลือก</h2>
             <span className="text-base text-ink-light">{cart.length} รายการ</span>
           </div>
           {errors.items && <p className="mt-2 text-base font-semibold text-danger-700">{errors.items}</p>}
           <ul className="mt-4 divide-y divide-slate-200">
-            {cartDetails.map(({ supplyId, quantity, supply }) => (
-              <li key={supplyId} className="py-4 first:pt-0 last:pb-0">
-                <div className="flex gap-3">
-                  {supply ? (
-                    <SupplyImage item={supply} className="h-20 w-20 shrink-0 rounded-xl" />
-                  ) : (
-                    <div className="h-20 w-20 shrink-0 rounded-xl bg-slate-100" />
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-base font-bold text-ink">{supply?.name ?? 'ไม่พบข้อมูลพัสดุ'}</h3>
-                    <p className="mt-1 text-sm text-ink-light">
-                      {supply ? `${supply.code} · หน่วยนับ ${supply.unit}` : supplyId}
-                    </p>
-                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-                      <QuantityStepper
-                        label={supply?.name ?? supplyId}
-                        value={quantity}
-                        onChange={(next) => {
-                          setQuantity(supplyId, next);
-                          setErrors((current) => ({ ...current, items: undefined }));
-                        }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => remove(supplyId)}
-                        className="tap-target inline-flex items-center gap-1.5 rounded-xl px-3 text-base font-bold text-danger-700 hover:bg-danger-50"
-                      >
-                        <Trash2 className="h-5 w-5" aria-hidden /> ลบรายการ
-                      </button>
+            {cart.map((item) => {
+              const supply = item.source === 'catalog' ? suppliesById.get(item.supplyId) : undefined;
+              const name = item.source === 'custom' ? item.customSupply.name : supply?.name ?? 'ไม่พบข้อมูลวัสดุ';
+              const unit = item.source === 'custom' ? item.customSupply.unit : supply?.unit ?? 'ชิ้น';
+              return (
+                <li key={item.id} className="py-4 first:pt-0 last:pb-0">
+                  <div className="flex gap-3">
+                    {item.source === 'catalog' && supply ? (
+                      <SupplyImage item={supply} className="h-20 w-20 shrink-0 rounded-xl" />
+                    ) : item.source === 'custom' && item.customSupply.imageUrl ? (
+                      <img src={item.customSupply.imageUrl} alt={`รูปตัวอย่าง ${name}`} className="h-20 w-20 shrink-0 rounded-xl object-cover" />
+                    ) : (
+                      <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl bg-attention-50 text-attention-700"><ShoppingBasket className="h-7 w-7" aria-hidden /></div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-base font-bold text-ink">{name}</h3>
+                        {item.source === 'custom' && <span className="rounded-full bg-attention-100 px-2.5 py-1 text-sm font-bold text-attention-900">รายการที่แจ้งเพิ่มเติม</span>}
+                      </div>
+                      <p className="mt-1 text-sm text-ink-light">
+                        {item.source === 'catalog' ? `${supply?.code ?? '—'} · หน่วยนับ ${unit}` : item.customSupply.description}
+                      </p>
+                      {item.source === 'custom' && <p className="mt-2 inline-flex items-center gap-1.5 text-sm font-bold text-attention-800"><CheckCircle2 className="h-4 w-4" aria-hidden /> รอเจ้าหน้าที่ตรวจสอบรายการ</p>}
+                      <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                        <QuantityStepper label={name} value={item.requestedQuantity} onChange={(next) => setQuantity(item.id, next)} />
+                        <div className="flex flex-wrap gap-1">
+                          {item.source === 'custom' && (
+                            <button type="button" onClick={() => setEditingCustom(item.customSupply)} className="tap-target inline-flex items-center gap-1.5 rounded-xl px-3 text-base font-bold text-primary-700 hover:bg-primary-50"><Edit3 className="h-5 w-5" aria-hidden /> แก้ไข</button>
+                          )}
+                          <button type="button" onClick={() => remove(item.id)} className="tap-target inline-flex items-center gap-1.5 rounded-xl px-3 text-base font-bold text-danger-700 hover:bg-danger-50"><Trash2 className="h-5 w-5" aria-hidden /> ลบ</button>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
-          <div className="mt-5 flex items-center justify-between rounded-xl bg-slate-100 px-4 py-3 text-base">
-            <span className="font-semibold text-ink">รวมทั้งหมด</span>
-            <strong className="text-lg text-ink">{totalPieces} ชิ้น</strong>
-          </div>
+          <div className="mt-5 flex items-center justify-between rounded-xl bg-slate-100 px-4 py-3 text-base"><span className="font-semibold text-ink">รวมทั้งหมด</span><strong className="text-lg text-ink">{totalPieces} ชิ้น</strong></div>
         </section>
 
-        <section className="card p-4 sm:p-6" aria-labelledby="requester-title">
-          <h2 id="requester-title" className="font-display text-xl font-bold text-ink">
-            ข้อมูลผู้เบิก
-          </h2>
-          <p className="mt-1 text-base text-ink-light">ช่องที่มีเครื่องหมาย * จำเป็นต้องกรอก</p>
-          <div className="mt-5 space-y-5">
-            <FieldWithError label="ชื่อ–นามสกุล *" id="requester-name" error={errors.requesterName}>
-              <input
-                id="requester-name"
-                autoComplete="name"
-                value={values.requesterName}
-                onChange={(event) => updateField('requesterName', event.target.value)}
-                aria-invalid={Boolean(errors.requesterName)}
-                className={cn(inputClass, errors.requesterName && 'border-danger-500')}
-              />
-            </FieldWithError>
-            <FieldWithError label="กลุ่มสาระ/ฝ่าย *" id="department" error={errors.department}>
-              <input
-                id="department"
-                value={values.department}
-                onChange={(event) => updateField('department', event.target.value)}
-                aria-invalid={Boolean(errors.department)}
-                placeholder="เช่น กลุ่มสาระภาษาไทย"
-                className={cn(inputClass, errors.department && 'border-danger-500')}
-              />
-            </FieldWithError>
-            <FieldWithError label="เบอร์โทรศัพท์ *" id="phone" error={errors.phone}>
-              <input
-                id="phone"
-                type="tel"
-                inputMode="tel"
-                autoComplete="tel"
-                value={values.phone}
-                onChange={(event) => updateField('phone', event.target.value)}
-                aria-invalid={Boolean(errors.phone)}
-                placeholder="เช่น 081-234-5678"
-                className={cn(inputClass, errors.phone && 'border-danger-500')}
-              />
-            </FieldWithError>
-            <FieldWithError label="วัตถุประสงค์ในการใช้งาน *" id="purpose" error={errors.purpose}>
-              <textarea
-                id="purpose"
-                rows={3}
-                value={values.purpose}
-                onChange={(event) => updateField('purpose', event.target.value)}
-                aria-invalid={Boolean(errors.purpose)}
-                placeholder="บอกสั้น ๆ ว่านำไปใช้กับงานใด"
-                className={cn(textareaClass, errors.purpose && 'border-danger-500')}
-              />
-            </FieldWithError>
-            <FieldWithError label="วันที่ต้องการรับ *" id="pickup-date" error={errors.requestedPickupDate}>
-              <div className="relative">
-                <CalendarDays className="pointer-events-none absolute left-3 top-3.5 h-5 w-5 text-ink-light" aria-hidden />
-                <input
-                  id="pickup-date"
-                  type="date"
-                  min={minimumDate}
-                  value={values.requestedPickupDate}
-                  onChange={(event) => updateField('requestedPickupDate', event.target.value)}
-                  onInput={(event) =>
-                    updateField('requestedPickupDate', (event.target as HTMLInputElement).value)
-                  }
-                  aria-invalid={Boolean(errors.requestedPickupDate)}
-                  className={cn(inputClass, 'pl-11', errors.requestedPickupDate && 'border-danger-500')}
-                />
+        <div className="space-y-6">
+          <section className="card p-4 sm:p-6" aria-labelledby="requester-title">
+            <div className="flex items-start gap-3">
+              <UserCheck className="h-7 w-7 shrink-0 text-primary-600" aria-hidden />
+              <div>
+                <h2 id="requester-title" className="font-display text-xl font-bold text-ink">ข้อมูลผู้ขอจากบัญชี</h2>
+                <p className="mt-1 text-base text-ink-light">โหลดอัตโนมัติจากระบบบุคลากร</p>
               </div>
-            </FieldWithError>
-            <FormField label="หมายเหตุ" htmlFor="note" optional>
-              <textarea
-                id="note"
-                rows={3}
-                value={values.note}
-                onChange={(event) => updateField('note', event.target.value)}
-                placeholder="รายละเอียดเพิ่มเติมที่อยากแจ้งเจ้าหน้าที่"
-                className={textareaClass}
-              />
-            </FormField>
-          </div>
-          <Button type="submit" size="lg" fullWidth className="mt-6" leftIcon={<Send className="h-5 w-5" aria-hidden />}>
-            ส่งให้เจ้าหน้าที่ตรวจของ
-          </Button>
-        </section>
+            </div>
+            <dl className="mt-4 grid gap-3 rounded-xl bg-primary-50 p-4 text-base sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+              <ReadOnlyDetail label="ชื่อ–นามสกุล" value={profile.data.fullName} />
+              <ReadOnlyDetail label="รหัสบุคลากร" value={profile.data.personnelId} />
+              <ReadOnlyDetail label="ตำแหน่ง" value={profile.data.position} />
+              <ReadOnlyDetail label="กลุ่มสาระ/ฝ่าย" value={profile.data.department} />
+              <ReadOnlyDetail label="เบอร์โทร" value={profile.data.phone} />
+            </dl>
+          </section>
+
+          <section className="card p-4 sm:p-6" aria-labelledby="request-purpose-title">
+            <h2 id="request-purpose-title" className="font-display text-xl font-bold text-ink">ข้อมูลการใช้งาน</h2>
+            <p className="mt-1 text-base text-ink-light">กรอกเฉพาะข้อมูลของคำขอครั้งนี้</p>
+            <div className="mt-5 space-y-5">
+              <FieldWithError label="วัตถุประสงค์ *" id="purpose" error={errors.purpose}>
+                <textarea id="purpose" rows={3} value={values.purpose} onChange={(event) => updateField('purpose', event.target.value)} placeholder="เช่น ใช้จัดกิจกรรมการเรียนรู้" className={cn(textareaClass, errors.purpose && 'border-danger-500')} />
+              </FieldWithError>
+              <FieldWithError label="งานหรือกิจกรรม *" id="activity-name" error={errors.activityName}>
+                <input id="activity-name" value={values.activityName} onChange={(event) => updateField('activityName', event.target.value)} placeholder="เช่น กิจกรรมวันวิทยาศาสตร์" className={cn(inputClass, errors.activityName && 'border-danger-500')} />
+              </FieldWithError>
+              <FieldWithError label="วันที่ต้องการรับ *" id="pickup-date" error={errors.requestedPickupDate}>
+                <div className="relative"><CalendarDays className="pointer-events-none absolute left-3 top-3.5 h-5 w-5 text-ink-light" aria-hidden /><input id="pickup-date" type="date" min={minimumDate} value={values.requestedPickupDate} onChange={(event) => updateField('requestedPickupDate', event.target.value)} onInput={(event) => updateField('requestedPickupDate', (event.target as HTMLInputElement).value)} className={cn(inputClass, 'pl-11', errors.requestedPickupDate && 'border-danger-500')} /></div>
+              </FieldWithError>
+              <FormField label="หมายเหตุ" htmlFor="note" optional><textarea id="note" rows={3} value={values.note} onChange={(event) => updateField('note', event.target.value)} className={textareaClass} /></FormField>
+            </div>
+            <Button type="submit" size="lg" fullWidth className="mt-6" leftIcon={<Send className="h-5 w-5" aria-hidden />}>ตรวจสอบก่อนส่งคำขอ</Button>
+          </section>
+        </div>
       </form>
 
-      <Modal
-        open={confirmOpen}
-        onClose={() => setConfirmOpen(false)}
-        dismissible={!createRequest.isPending}
-        labelledBy="confirm-request-title"
-      >
-        <h2 id="confirm-request-title" className="font-display text-2xl font-bold text-ink">
-          ยืนยันการส่งคำขอ
-        </h2>
-        <p className="mt-2 text-base leading-relaxed text-ink-light">
-          กรุณาตรวจข้อมูลอีกครั้ง เมื่อส่งแล้วเจ้าหน้าที่จะเริ่มตรวจของ
-        </p>
+      <CustomSupplyModal open={Boolean(editingCustom)} onClose={() => setEditingCustom(undefined)} initialValue={editingCustom} onSave={(value) => {
+        if (!editingCustom) return;
+        saveCustom(value, editingCustom.id);
+        toast.success('บันทึกการแก้ไขแล้ว', value.name);
+      }} />
+
+      <Modal open={confirmOpen} onClose={() => setConfirmOpen(false)} dismissible={!createRequest.isPending} labelledBy="confirm-request-title">
+        <h2 id="confirm-request-title" className="font-display text-2xl font-bold text-ink">ยืนยันการส่งคำขอ</h2>
+        <p className="mt-2 text-base leading-relaxed text-ink-light">เมื่อส่งแล้ว เจ้าหน้าที่จะเริ่มตรวจรายการภายในระบบจำลอง</p>
         <dl className="mt-5 space-y-3 rounded-xl bg-slate-50 p-4 text-base">
-          <SummaryRow label="ชื่อผู้เบิก" value={values.requesterName} />
-          <SummaryRow label="กลุ่มสาระ/ฝ่าย" value={values.department} />
+          <SummaryRow label="ผู้ขอ" value={profile.data.fullName} />
+          <SummaryRow label="กิจกรรม" value={values.activityName} />
           <SummaryRow label="วันที่ต้องการรับ" value={formatThaiDate(values.requestedPickupDate)} />
           <SummaryRow label="จำนวนรวม" value={`${cart.length} รายการ · ${totalPieces} ชิ้น`} />
         </dl>
-        <ul className="mt-4 divide-y divide-slate-200 rounded-xl border border-slate-200 px-4">
-          {cartDetails.map(({ supplyId, quantity, supply }) => (
-            <li key={supplyId} className="flex items-center justify-between gap-4 py-3 text-base">
-              <span className="font-semibold text-ink">{supply?.name ?? supplyId}</span>
-              <span className="shrink-0 text-ink-light">{quantity} {supply?.unit ?? 'ชิ้น'}</span>
-            </li>
-          ))}
-        </ul>
-        {createRequest.isError && (
-          <p role="alert" className="mt-4 rounded-xl bg-danger-50 p-3 text-base font-semibold text-danger-800">
-            {getErrorMessage(createRequest.error, 'ส่งคำขอไม่สำเร็จ กรุณาลองใหม่')}
-          </p>
-        )}
+        {createRequest.isError && <p role="alert" className="mt-4 rounded-xl bg-danger-50 p-3 text-base font-semibold text-danger-800">{getErrorMessage(createRequest.error, 'ส่งคำขอไม่สำเร็จ กรุณาลองใหม่')}</p>}
         <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <Button type="button" variant="ghost" disabled={createRequest.isPending} onClick={() => setConfirmOpen(false)}>
-            กลับไปแก้ไข
-          </Button>
-          <Button
-            type="button"
-            isLoading={createRequest.isPending}
-            loadingText="กำลังส่งคำขอ…"
-            leftIcon={<Send className="h-5 w-5" aria-hidden />}
-            onClick={() => void handleConfirm()}
-          >
-            ยืนยันส่งคำขอ
-          </Button>
+          <Button type="button" variant="ghost" disabled={createRequest.isPending} onClick={() => setConfirmOpen(false)}>กลับไปแก้ไข</Button>
+          <Button type="button" isLoading={createRequest.isPending} loadingText="กำลังส่งคำขอ…" leftIcon={<Send className="h-5 w-5" aria-hidden />} onClick={() => void handleConfirm()}>ยืนยันส่งคำขอ</Button>
         </div>
       </Modal>
     </>
   );
 }
 
-function FieldWithError({
-  label,
-  id,
-  error,
-  children,
-}: {
-  label: string;
-  id: string;
-  error?: string;
-  children: React.ReactNode;
-}) {
-  const errorId = `${id}-error`;
-  return (
-    <FormField label={label} htmlFor={id}>
-      {children}
-      {error && <p id={errorId} className="mt-1.5 text-base font-semibold text-danger-700">{error}</p>}
-    </FormField>
-  );
+function FieldWithError({ label, id, error, children }: { label: string; id: string; error?: string; children: React.ReactNode }) {
+  return <FormField label={label} htmlFor={id}>{children}{error && <p role="alert" className="mt-1.5 text-base font-semibold text-danger-700">{error}</p>}</FormField>;
+}
+
+function ReadOnlyDetail({ label, value }: { label: string; value: string }) {
+  return <div><dt className="text-sm font-semibold text-primary-800">{label}</dt><dd className="mt-1 font-bold text-ink">{value}</dd></div>;
 }
 
 function SummaryRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="grid grid-cols-[8rem_1fr] gap-3">
-      <dt className="text-ink-light">{label}</dt>
-      <dd className="font-semibold text-ink">{value}</dd>
-    </div>
-  );
+  return <div className="grid grid-cols-[7rem_1fr] gap-3"><dt className="text-ink-light">{label}</dt><dd className="font-semibold text-ink">{value}</dd></div>;
 }

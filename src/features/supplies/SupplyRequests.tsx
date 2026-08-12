@@ -1,4 +1,4 @@
-import { ClipboardList, PackagePlus } from 'lucide-react';
+import { ClipboardList, Download, PackagePlus } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useMySupplyRequests } from '@/hooks/useSupplyRequisition';
 import type { SupplyRoute } from '@/routes';
@@ -46,7 +46,7 @@ export function SupplyRequests({ onNavigate }: { onNavigate: (route: SupplyRoute
     <>
       <SupplyPageHeading
         title="คำขอของฉัน"
-        description="รายการนี้แสดงเฉพาะคำขอที่สร้างจากเบราว์เซอร์และอุปกรณ์เครื่องนี้ จึงไม่ต้องเข้าสู่ระบบ"
+        description="โหลดคำขอตามบัญชีครูที่เข้าสู่ระบบ จึงเปิดติดตามได้โดยไม่ผูกกับเบราว์เซอร์เครื่องเดียว"
         action={
           <Button
             className="border-2 border-white bg-white text-primary-800 hover:bg-primary-50"
@@ -61,8 +61,8 @@ export function SupplyRequests({ onNavigate }: { onNavigate: (route: SupplyRoute
       {sorted.length === 0 ? (
         <StatePanel
           icon={ClipboardList}
-          title="ยังไม่มีคำขอจากอุปกรณ์นี้"
-          description="เมื่อส่งคำขอเบิกพัสดุแล้ว ระบบจะแสดงรายการและสถานะให้ติดตามที่นี่"
+          title="ยังไม่มีคำขอของคุณครู"
+          description="เมื่อส่งคำขอเบิกวัสดุแล้ว ระบบจะแสดงรายการและสถานะให้ติดตามที่นี่"
           actionLabel="เลือกพัสดุ"
           onAction={() => onNavigate({ name: 'supply-catalog' })}
         />
@@ -79,7 +79,7 @@ export function SupplyRequests({ onNavigate }: { onNavigate: (route: SupplyRoute
               ) : (
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                   {group.items.map((requisition) => (
-                    <RequestCard key={requisition.id} requisition={requisition} onOpen={() => onNavigate(routeForRequest(requisition))} />
+                    <RequestCard key={requisition.id} requisition={requisition} onOpen={() => onNavigate(routeForRequest(requisition))} onDocument={() => onNavigate({ name: 'supply-document', token: requisition.publicToken })} />
                   ))}
                 </div>
               )}
@@ -91,7 +91,7 @@ export function SupplyRequests({ onNavigate }: { onNavigate: (route: SupplyRoute
   );
 }
 
-function RequestCard({ requisition, onOpen }: { requisition: Requisition; onOpen: () => void }) {
+function RequestCard({ requisition, onOpen, onDocument }: { requisition: Requisition; onOpen: () => void; onDocument: () => void }) {
   const pieces = requisition.items.reduce(
     (sum, item) => sum + (requisition.status === 'ready_for_pickup' ? item.confirmedQuantity ?? 0 : item.requestedQuantity),
     0,
@@ -107,10 +107,14 @@ function RequestCard({ requisition, onOpen }: { requisition: Requisition; onOpen
       </div>
       <dl className="mt-4 space-y-2 text-base">
         <div className="flex justify-between gap-4"><dt className="text-ink-light">วันที่สร้าง</dt><dd className="text-right font-semibold text-ink">{formatThaiDate(requisition.createdAt)}</dd></div>
+        <div className="flex justify-between gap-4"><dt className="text-ink-light">วัตถุประสงค์</dt><dd className="max-w-[65%] text-right font-semibold text-ink">{requisition.purpose}</dd></div>
         <div className="flex justify-between gap-4"><dt className="text-ink-light">รายการ</dt><dd className="font-semibold text-ink">{requisition.items.length} รายการ</dd></div>
         <div className="flex justify-between gap-4"><dt className="text-ink-light">จำนวนรวม</dt><dd className="font-semibold text-ink">{pieces} ชิ้น</dd></div>
       </dl>
-      <Button variant="outline" fullWidth className="mt-5" onClick={onOpen}>เปิดรายละเอียด</Button>
+      <div className="mt-5 grid gap-2">
+        <Button variant="outline" fullWidth onClick={onOpen}>เปิดรายละเอียด</Button>
+        <Button variant="ghost" fullWidth leftIcon={<Download className="h-5 w-5" aria-hidden />} onClick={onDocument}>ดาวน์โหลดเอกสาร</Button>
+      </div>
     </article>
   );
 }

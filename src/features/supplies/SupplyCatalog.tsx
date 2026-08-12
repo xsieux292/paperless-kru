@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Check, ClipboardList, PackageSearch, Search, ShoppingBasket } from 'lucide-react';
+import { Check, ClipboardList, PackagePlus, PackageSearch, Search, ShoppingBasket } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/cn';
 import { useToast } from '@/providers/toastContext';
@@ -13,16 +13,23 @@ import {
   SupplyImage,
   SupplyPageHeading,
 } from './SupplyShared';
+import { CustomSupplyModal } from './CustomSupplyModal';
 
 export function SupplyCatalog({ onNavigate }: { onNavigate: (route: SupplyRoute) => void }) {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('ทั้งหมด');
+  const [customOpen, setCustomOpen] = useState(false);
   const catalog = useSupplyCatalog();
-  const { cart, setQuantity } = useSupplyCart();
+  const { cart, setCatalogQuantity, saveCustom } = useSupplyCart();
   const toast = useToast();
 
   const quantities = useMemo(
-    () => new Map(cart.map((item) => [item.supplyId, item.quantity])),
+    () =>
+      new Map(
+        cart.flatMap((item) =>
+          item.source === 'catalog' ? [[item.supplyId, item.requestedQuantity] as const] : [],
+        ),
+      ),
     [cart],
   );
   const categories = useMemo(
@@ -40,12 +47,12 @@ export function SupplyCatalog({ onNavigate }: { onNavigate: (route: SupplyRoute)
       return inCategory && matches && item.active;
     });
   }, [catalog.data, category, search]);
-  const totalPieces = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const totalPieces = cart.reduce((sum, item) => sum + item.requestedQuantity, 0);
 
   return (
     <>
       <SupplyPageHeading
-        eyebrow="สำหรับคุณครู · ไม่ต้องเข้าสู่ระบบ"
+        eyebrow="สำหรับคุณครู · เข้าสู่ระบบแล้ว"
         title="เบิกพัสดุ"
         description="เลือกพัสดุที่ต้องการได้เลย เจ้าหน้าที่จะตรวจสอบของจริงและแจ้งจำนวนที่ยืนยันได้ก่อนคุณครูรับของ"
         action={
@@ -110,16 +117,19 @@ export function SupplyCatalog({ onNavigate }: { onNavigate: (route: SupplyRoute)
           onAction={() => void catalog.refetch()}
         />
       ) : filtered.length === 0 ? (
-        <StatePanel
-          icon={PackageSearch}
-          title="ไม่พบพัสดุที่ค้นหา"
-          description="ลองใช้คำค้นอื่น หรือเลือกหมวดหมู่ทั้งหมด"
-          actionLabel="ล้างตัวกรอง"
-          onAction={() => {
-            setSearch('');
-            setCategory('ทั้งหมด');
-          }}
-        />
+        <div className="space-y-4">
+          <StatePanel
+            icon={PackageSearch}
+            title="ไม่พบพัสดุที่ค้นหา"
+            description="ลองใช้คำค้นอื่น หรือแจ้งรายการเพิ่มเติมให้เจ้าหน้าที่ตรวจสอบ"
+            actionLabel="ล้างตัวกรอง"
+            onAction={() => {
+              setSearch('');
+              setCategory('ทั้งหมด');
+            }}
+          />
+          <CustomSupplyPrompt onOpen={() => setCustomOpen(true)} />
+        </div>
       ) : (
         <section aria-labelledby="catalog-heading">
           <div className="mb-3 flex items-center justify-between gap-3">
@@ -164,7 +174,7 @@ export function SupplyCatalog({ onNavigate }: { onNavigate: (route: SupplyRoute)
                           <QuantityStepper
                             label={item.name}
                             value={quantity}
-                            onChange={(next) => setQuantity(item.id, next)}
+                            onChange={(next) => setCatalogQuantity(item.id, next)}
                           />
                         </div>
                       ) : (
@@ -175,7 +185,7 @@ export function SupplyCatalog({ onNavigate }: { onNavigate: (route: SupplyRoute)
                           disabled={paused}
                           leftIcon={<ShoppingBasket className="h-5 w-5" aria-hidden />}
                           onClick={() => {
-                            setQuantity(item.id, 1);
+                            setCatalogQuantity(item.id, 1);
                             toast.success('เพิ่มลงตะกร้าแล้ว', `${item.name} จำนวน 1 ${item.unit}`);
                           }}
                         >
@@ -188,6 +198,7 @@ export function SupplyCatalog({ onNavigate }: { onNavigate: (route: SupplyRoute)
               );
             })}
           </div>
+          <CustomSupplyPrompt onOpen={() => setCustomOpen(true)} />
         </section>
       )}
 
@@ -208,7 +219,33 @@ export function SupplyCatalog({ onNavigate }: { onNavigate: (route: SupplyRoute)
           </div>
         </div>
       )}
+
+      <CustomSupplyModal
+        open={customOpen}
+        onClose={() => setCustomOpen(false)}
+        onSave={(value) => {
+          saveCustom(value);
+          toast.success('เพิ่มรายการลงตะกร้าแล้ว', `${value.name} · รอเจ้าหน้าที่ตรวจสอบรายการ`);
+        }}
+      />
     </>
   );
 }
 
+function CustomSupplyPrompt({ onOpen }: { onOpen: () => void }) {
+  return (
+    <aside className="mt-6 rounded-2xl border-2 border-dashed border-primary-300 bg-primary-50 p-5 sm:flex sm:items-center sm:justify-between sm:gap-5" aria-labelledby="custom-supply-prompt-title">
+      <div>
+        <h2 id="custom-supply-prompt-title" className="font-display text-xl font-bold text-primary-950">
+          ไม่พบวัสดุที่ต้องการ?
+        </h2>
+        <p className="mt-1 text-base leading-relaxed text-primary-900">
+          คุณครูสามารถแจ้งรายการเพิ่มเติมให้เจ้าหน้าที่ตรวจสอบได้
+        </p>
+      </div>
+      <Button type="button" variant="outline" className="mt-4 shrink-0 bg-white sm:mt-0" leftIcon={<PackagePlus className="h-5 w-5" aria-hidden />} onClick={onOpen}>
+        เพิ่มของที่ไม่มีในรายการ
+      </Button>
+    </aside>
+  );
+}

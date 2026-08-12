@@ -10,6 +10,8 @@ export type SupplyRoute =
   | { name: 'supply-tracking'; token: string }
   | { name: 'supply-confirmation'; token: string }
   | { name: 'supply-pickup'; token: string }
+  | { name: 'supply-document'; token: string }
+  | { name: 'supply-document-verify'; token: string }
   | { name: 'supply-requests' };
 
 export type RouteTarget = AppRoute | SupplyRoute;
@@ -72,6 +74,10 @@ export function parseHash(hash: string): RouteState {
       supplyRoute = { name: 'supply-confirmation', token };
     } else if (section === 'รับของ' && token) {
       supplyRoute = { name: 'supply-pickup', token };
+    } else if (section === 'เอกสาร' && token) {
+      supplyRoute = { name: 'supply-document', token };
+    } else if (section === 'ตรวจเอกสาร' && token) {
+      supplyRoute = { name: 'supply-document-verify', token };
     } else {
       supplyRoute = { name: 'supply-catalog' };
     }
@@ -105,6 +111,10 @@ export function hashForRoute(route: RouteTarget): string {
       return `#/เบิกพัสดุ/ยืนยัน/${encodeURIComponent(route.token)}`;
     case 'supply-pickup':
       return `#/เบิกพัสดุ/รับของ/${encodeURIComponent(route.token)}`;
+    case 'supply-document':
+      return `#/เบิกพัสดุ/เอกสาร/${encodeURIComponent(route.token)}`;
+    case 'supply-document-verify':
+      return `#/เบิกพัสดุ/ตรวจเอกสาร/${encodeURIComponent(route.token)}`;
     case 'supply-requests':
       return '#/เบิกพัสดุ/คำขอของฉัน';
   }

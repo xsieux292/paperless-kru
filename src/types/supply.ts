@@ -1,9 +1,4 @@
-/**
- * โดเมน "เบิกพัสดุ" ฝั่งครู
- *
- * แยกจาก Requisition เดิมใน src/types/index.ts โดยตั้งใจ เพราะ Requisition เดิม
- * เป็น flow เบิกงบ/ยืมพัสดุคนละระบบและมีสถานะคนละชุดกัน
- */
+/** โดเมนระบบเบิกวัสดุฝั่งครู แยกจาก flow เบิกงบเดิม */
 
 export type SupplyAvailability = 'available' | 'low' | 'paused';
 
@@ -27,43 +22,137 @@ export type SupplyItem = {
   active: boolean;
 };
 
-export type CartItem = {
-  supplyId: string;
+export type CustomSupplyRequest = {
+  id: string;
+  name: string;
+  description: string;
   quantity: number;
+  unit: string;
+  reason: string;
+  imageUrl?: string;
+  referenceUrl?: string;
+  note?: string;
 };
 
-export type RequisitionItem = {
-  supplyId: string;
-  requestedQuantity: number;
-  confirmedQuantity?: number;
-  staffNote?: string;
+export type CustomSupplyReviewStatus = 'pending' | 'confirmed' | 'rejected' | 'replacement';
+
+export type RequisitionItem =
+  | {
+      id: string;
+      source: 'catalog';
+      supplyId: string;
+      requestedQuantity: number;
+      confirmedQuantity?: number;
+      staffNote?: string;
+    }
+  | {
+      id: string;
+      source: 'custom';
+      customSupply: CustomSupplyRequest;
+      requestedQuantity: number;
+      confirmedQuantity?: number;
+      staffNote?: string;
+      replacementSupplyId?: string;
+      reviewStatus?: CustomSupplyReviewStatus;
+    };
+
+/** ตะกร้าใช้ชนิดเดียวกับรายการคำขอ แต่ยังไม่มีผลตรวจจากเจ้าหน้าที่ */
+export type CartItem = RequisitionItem;
+
+export type RequisitionRequester = {
+  id: string;
+  fullName: string;
+  personnelId: string;
+  position: string;
+  department: string;
+  phone: string;
+  schoolName: string;
 };
 
 export type Requisition = {
   id: string;
   requestNumber: string;
   publicToken: string;
-  requesterName: string;
-  department: string;
-  phone: string;
+  teacherProfile: RequisitionRequester;
   purpose: string;
+  activityName: string;
   requestedPickupDate: string;
   note?: string;
   status: RequisitionStatus;
   items: RequisitionItem[];
+  submittedAt: string;
+  teacherAcceptedAt?: string;
   otpVerifiedAt?: string;
+  otpReference?: string;
   pickupToken?: string;
   pickupExpiresAt?: string;
   createdAt: string;
   updatedAt: string;
 };
 
-/** Payload ของ POST /requisitions สำหรับ flow เบิกพัสดุ */
-export type CreateSupplyRequisitionInput = Pick<
-  Requisition,
-  'requesterName' | 'department' | 'phone' | 'purpose' | 'requestedPickupDate' | 'note'
-> & {
+export type CreateSupplyRequisitionInput = {
+  teacherProfile: RequisitionRequester;
+  purpose: string;
+  activityName: string;
+  requestedPickupDate: string;
+  note?: string;
   items: CartItem[];
+};
+
+export type RequisitionAuditEventType =
+  | 'created'
+  | 'submitted'
+  | 'stock_check_completed'
+  | 'items_changed'
+  | 'teacher_accepted'
+  | 'otp_sent'
+  | 'otp_verified'
+  | 'pickup_qr_created'
+  | 'cancelled'
+  | 'document_generated';
+
+export type RequisitionAuditEvent = {
+  id: string;
+  requisitionId: string;
+  event: RequisitionAuditEventType;
+  actorType: 'teacher' | 'staff' | 'system';
+  actorId?: string;
+  actorName: string;
+  occurredAt: string;
+  note?: string;
+  before?: unknown;
+  after?: unknown;
+};
+
+export type SchoolDocumentTemplate = {
+  schoolName: string;
+  schoolAddress: string;
+  schoolLogoUrl?: string;
+  fiscalYear: string;
+  documentTitle: string;
+  verificationBaseUrl: string;
+  version: string;
+};
+
+export type RequisitionDocument = {
+  requisition: Requisition;
+  template: SchoolDocumentTemplate;
+  kind: 'pending_review' | 'ready_for_pickup';
+  generatedAt: string;
+  verificationNumber: string;
+  verificationUrl: string;
+  version: string;
+  statusLabel: string;
+  watermark?: string;
+};
+
+export type DocumentVerification = {
+  valid: boolean;
+  verificationNumber: string;
+  requestNumber: string;
+  status: RequisitionStatus;
+  version: string;
+  generatedAt: string;
 };
 
 export type SendOtpResponse = {
@@ -74,12 +163,7 @@ export type SendOtpResponse = {
   maxAttempts: number;
   attemptsRemaining: number;
   maskedPhone: string;
-  /** มีเฉพาะ mock mode เพื่อแสดงในแถบ Mock Mode เท่านั้น */
   mockOtp?: string;
-};
-
-export type VerifyOtpInput = {
-  otp: string;
 };
 
 export type VerifyOtpResponse = {
@@ -88,8 +172,6 @@ export type VerifyOtpResponse = {
   pickupExpiresAt: string;
 };
 
-/** snapshot ที่เหมาะกับ useSyncExternalStore โดย UI ไม่ต้องแตะ localStorage */
 export type SupplyStorageSnapshot = {
   cart: CartItem[];
-  publicTokens: string[];
 };
