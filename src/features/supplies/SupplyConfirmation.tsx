@@ -61,10 +61,17 @@ export function SupplyConfirmation({ token, onNavigate }: { token: string; onNav
   const confirmedTotal = requisition.items.reduce((sum, item) => sum + (item.confirmedQuantity ?? 0), 0);
   const fallbackMaskedPhone = maskPhone(requisition.teacherProfile.phone);
 
+  /**
+   * ยอมรับรายการแล้วส่ง OTP ให้ทันที
+   *
+   * เดิมครูต้องกดปุ่ม "ส่งรหัส OTP" ใน popup ซ้ำอีกครั้ง ทั้งที่ตรงนั้นไม่มีอะไร
+   * ให้ตัดสินใจ จึงรวบเหลือปุ่มเดียว (ถ้าส่งไม่สำเร็จ popup ยังมีปุ่มส่งใหม่ให้)
+   */
   const handleAccept = async () => {
     try {
       if (!requisition.teacherAcceptedAt) await acceptRequest.mutateAsync();
       setOtpOpen(true);
+      await handleSendOtp();
     } catch (error) {
       toast.error('ยอมรับรายการไม่สำเร็จ', getErrorMessage(error, 'กรุณาลองใหม่อีกครั้ง'));
     }
@@ -142,14 +149,15 @@ export function SupplyConfirmation({ token, onNavigate }: { token: string; onNav
         <div className="grid gap-3 border-t border-slate-200 bg-slate-50 p-5 text-base sm:grid-cols-2 sm:p-6"><p className="rounded-xl bg-white p-4 text-ink">ขอทั้งหมด <strong className="text-xl">{requestedTotal}</strong> ชิ้น</p><p className="rounded-xl bg-primary-50 p-4 text-primary-900">ยืนยันได้ <strong className="text-xl">{confirmedTotal}</strong> ชิ้น</p></div>
       </section>
 
-      <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end"><Button variant="danger" onClick={() => setCancelOpen(true)} leftIcon={<XCircle className="h-5 w-5" aria-hidden />}>ยกเลิกคำขอ</Button><Button size="lg" isLoading={acceptRequest.isPending} loadingText="กำลังบันทึก…" onClick={() => void handleAccept()} leftIcon={<ShieldCheck className="h-5 w-5" aria-hidden />}>{requisition.teacherAcceptedAt ? 'ดำเนินการยืนยัน OTP' : 'ยอมรับรายการนี้'}</Button></div>
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end"><Button variant="danger" onClick={() => setCancelOpen(true)} leftIcon={<XCircle className="h-5 w-5" aria-hidden />}>ยกเลิกคำขอ</Button><Button size="lg" isLoading={acceptRequest.isPending || sendOtp.isPending} loadingText="กำลังส่งรหัส OTP…" onClick={() => void handleAccept()} leftIcon={<ShieldCheck className="h-5 w-5" aria-hidden />}>{requisition.teacherAcceptedAt ? 'ขอรหัส OTP เพื่อยืนยัน' : 'ยอมรับและรับรหัส OTP'}</Button></div>
 
       <Modal open={otpOpen} onClose={() => setOtpOpen(false)} dismissible={!sendOtp.isPending && !verifyOtp.isPending} labelledBy="otp-title">
         <KeyRound className="h-11 w-11 text-primary-600" aria-hidden />
         <h2 id="otp-title" className="mt-3 font-display text-2xl font-bold text-ink">ยืนยันตัวตนด้วย OTP</h2>
         <p className="mt-2 text-base leading-relaxed text-ink-light">ส่งรหัส 6 หลักไปยังเบอร์ {otpResponse?.maskedPhone ?? fallbackMaskedPhone}</p>
         {!otpResponse ? (
-          <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end"><Button variant="ghost" disabled={sendOtp.isPending} onClick={() => setOtpOpen(false)}>ยังก่อน</Button><Button isLoading={sendOtp.isPending} loadingText="กำลังส่งรหัส…" leftIcon={<Send className="h-5 w-5" aria-hidden />} onClick={() => void handleSendOtp()}>ส่งรหัส OTP</Button></div>
+          /* ปกติระบบส่งรหัสให้อัตโนมัติแล้ว ส่วนนี้จะเห็นก็ต่อเมื่อส่งไม่สำเร็จ */
+          <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end"><Button variant="ghost" disabled={sendOtp.isPending} onClick={() => setOtpOpen(false)}>ยังก่อน</Button><Button isLoading={sendOtp.isPending} loadingText="กำลังส่งรหัส…" leftIcon={<Send className="h-5 w-5" aria-hidden />} onClick={() => void handleSendOtp()}>ส่งรหัสอีกครั้ง</Button></div>
         ) : (
           <form onSubmit={handleVerify} className="mt-5" noValidate>
             {otpResponse.mockOtp && <div className="mb-4 rounded-xl border border-slate-300 bg-slate-100 p-3 text-base text-ink"><FlaskConical className="mr-2 inline h-5 w-5" aria-hidden /><strong>โหมดข้อมูลจำลอง:</strong> OTP คือ <code className="font-mono font-bold">{otpResponse.mockOtp}</code></div>}

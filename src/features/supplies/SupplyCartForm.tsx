@@ -11,7 +11,6 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { FormField, inputClass, textareaClass } from '@/components/ui/FormField';
-import { Modal } from '@/components/ui/Modal';
 import {
   useCreateSupplyRequisition,
   useSupplyCart,
@@ -24,7 +23,6 @@ import type { SupplyRoute } from '@/routes';
 import type { CustomSupplyRequest } from '@/types/supply';
 import { CustomSupplyModal } from './CustomSupplyModal';
 import {
-  formatThaiDate,
   getErrorMessage,
   LoadingSkeleton,
   QuantityStepper,
@@ -55,10 +53,28 @@ const EMPTY_FORM: FormValues = {
   note: '',
 };
 
+/**
+ * วัตถุประสงค์ที่โรงเรียนใช้บ่อย — ให้ครูเลือกแทนการพิมพ์
+ *
+ * ค่าที่เลือกถูกเก็บลง `values.purpose` เป็นข้อความเหมือนเดิม
+ * จึงไม่กระทบ contract ที่ส่งให้ createRequest
+ */
+const PURPOSE_OPTIONS = [
+  'ใช้จัดกิจกรรมการเรียนการสอนในชั้นเรียน',
+  'ใช้จัดทำสื่อและอุปกรณ์การสอน',
+  'ใช้จัดกิจกรรมหรือโครงการของโรงเรียน',
+  'ใช้ในงานธุรการและงานเอกสาร',
+  'ใช้ในการวัดผลและประเมินผลผู้เรียน',
+  'ใช้ซ่อมแซมและบำรุงรักษาอุปกรณ์',
+] as const;
+
+/** ค่าพิเศษของ dropdown ที่เปิดช่องให้พิมพ์เอง */
+const PURPOSE_OTHER = 'อื่น ๆ (ระบุเอง)';
+
 export function SupplyCartForm({ onNavigate }: { onNavigate: (route: SupplyRoute) => void }) {
   const [values, setValues] = useState<FormValues>(EMPTY_FORM);
   const [errors, setErrors] = useState<FieldErrors>({});
-  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [purposeChoice, setPurposeChoice] = useState('');
   const [editingCustom, setEditingCustom] = useState<CustomSupplyRequest | undefined>();
   const submittingRef = useRef(false);
   const { cart, setQuantity, saveCustom, remove, clear } = useSupplyCart();
@@ -79,11 +95,23 @@ export function SupplyCartForm({ onNavigate }: { onNavigate: (route: SupplyRoute
     setErrors((current) => ({ ...current, [field]: undefined }));
   };
 
+  const purposeIsOther = purposeChoice === PURPOSE_OTHER;
+
+  /** เลือกจากรายการ = ได้ข้อความทันที · เลือก "อื่น ๆ" = ล้างช่องไว้ให้พิมพ์เอง */
+  const handlePurposeChoice = (choice: string) => {
+    setPurposeChoice(choice);
+    updateField('purpose', choice === PURPOSE_OTHER ? '' : choice);
+  };
+
   const validate = () => {
     const next: FieldErrors = {};
     if (cart.length === 0) next.items = 'กรุณาเลือกวัสดุอย่างน้อย 1 รายการ';
     if (cart.some((item) => item.requestedQuantity <= 0)) next.items = 'จำนวนต้องมากกว่า 0';
-    if (!values.purpose.trim()) next.purpose = 'กรุณากรอกวัตถุประสงค์ในการใช้งาน';
+    if (!values.purpose.trim()) {
+      next.purpose = purposeIsOther
+        ? 'กรุณาระบุวัตถุประสงค์ในการใช้งาน'
+        : 'กรุณาเลือกวัตถุประสงค์ในการใช้งาน';
+    }
     if (!values.activityName.trim()) next.activityName = 'กรุณากรอกชื่องานหรือกิจกรรม';
     if (!values.requestedPickupDate) next.requestedPickupDate = 'กรุณาเลือกวันที่ต้องการรับ';
     else if (values.requestedPickupDate < minimumDate) {
@@ -93,16 +121,18 @@ export function SupplyCartForm({ onNavigate }: { onNavigate: (route: SupplyRoute
     return Object.keys(next).length === 0;
   };
 
-  const handleReview = (event: FormEvent) => {
+  /**
+   * ส่งคำขอในปุ่มเดียว — ไม่มี popup ยืนยันซ้ำ
+   *
+   * หน้านี้แสดงรายการในตะกร้าและข้อมูลผู้ขอครบอยู่แล้ว popup เดิมจึงบอกข้อมูล
+   * น้อยกว่าหน้าที่ครูเห็นอยู่ และถ้าส่งผิดยังกดยกเลิกคำขอได้ในหน้าติดตาม
+   */
+  const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     if (!validate()) {
       toast.warning('กรุณาตรวจสอบข้อมูล', 'ยังมีข้อมูลที่ต้องกรอกหรือแก้ไข');
       return;
     }
-    setConfirmOpen(true);
-  };
-
-  const handleConfirm = async () => {
     if (submittingRef.current || !profile.data) return;
     submittingRef.current = true;
     try {
@@ -115,7 +145,6 @@ export function SupplyCartForm({ onNavigate }: { onNavigate: (route: SupplyRoute
         items: cart,
       });
       clear();
-      setConfirmOpen(false);
       toast.success('ส่งคำขอแล้ว', `เลขคำขอ ${requisition.requestNumber}`);
       onNavigate({ name: 'supply-tracking', token: requisition.publicToken });
     } catch (error) {
@@ -156,7 +185,7 @@ export function SupplyCartForm({ onNavigate }: { onNavigate: (route: SupplyRoute
       </button>
       <SupplyPageHeading title="ตรวจตะกร้าและส่งคำขอ" description="ระบบโหลดข้อมูลผู้ขอจากบัญชีที่เข้าสู่ระบบแล้ว คุณครูไม่ต้องกรอกข้อมูลส่วนตัวซ้ำ" />
 
-      <form onSubmit={handleReview} noValidate className="grid gap-6 lg:grid-cols-[minmax(0,1.08fr)_minmax(22rem,0.92fr)]">
+      <form onSubmit={(event) => void handleSubmit(event)} noValidate className="grid gap-6 lg:grid-cols-[minmax(0,1.08fr)_minmax(22rem,0.92fr)]">
         <section className="card h-fit p-4 sm:p-6" aria-labelledby="cart-items-title">
           <div className="flex items-center justify-between gap-3">
             <h2 id="cart-items-title" className="font-display text-xl font-bold text-ink">รายการที่เลือก</h2>
@@ -228,7 +257,12 @@ export function SupplyCartForm({ onNavigate }: { onNavigate: (route: SupplyRoute
             <p className="mt-1 text-base text-ink-light">กรอกเฉพาะข้อมูลของคำขอครั้งนี้</p>
             <div className="mt-5 space-y-5">
               <FieldWithError label="วัตถุประสงค์ *" id="purpose" error={errors.purpose}>
-                <textarea id="purpose" rows={3} value={values.purpose} onChange={(event) => updateField('purpose', event.target.value)} placeholder="เช่น ใช้จัดกิจกรรมการเรียนรู้" className={cn(textareaClass, errors.purpose && 'border-danger-500')} />
+                <select id="purpose" value={purposeChoice} onChange={(event) => handlePurposeChoice(event.target.value)} className={cn(inputClass, errors.purpose && 'border-danger-500')}>
+                  <option value="">เลือกวัตถุประสงค์</option>
+                  {PURPOSE_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
+                  <option value={PURPOSE_OTHER}>{PURPOSE_OTHER}</option>
+                </select>
+                {purposeIsOther && <textarea aria-label="ระบุวัตถุประสงค์ในการใช้งาน" rows={2} value={values.purpose} onChange={(event) => updateField('purpose', event.target.value)} placeholder="ระบุวัตถุประสงค์ในการใช้งาน" className={cn(textareaClass, 'mt-3', errors.purpose && 'border-danger-500')} />}
               </FieldWithError>
               <FieldWithError label="งานหรือกิจกรรม *" id="activity-name" error={errors.activityName}>
                 <input id="activity-name" value={values.activityName} onChange={(event) => updateField('activityName', event.target.value)} placeholder="เช่น กิจกรรมวันวิทยาศาสตร์" className={cn(inputClass, errors.activityName && 'border-danger-500')} />
@@ -238,7 +272,9 @@ export function SupplyCartForm({ onNavigate }: { onNavigate: (route: SupplyRoute
               </FieldWithError>
               <FormField label="หมายเหตุ" htmlFor="note" optional><textarea id="note" rows={3} value={values.note} onChange={(event) => updateField('note', event.target.value)} className={textareaClass} /></FormField>
             </div>
-            <Button type="submit" size="lg" fullWidth className="mt-6" leftIcon={<Send className="h-5 w-5" aria-hidden />}>ตรวจสอบก่อนส่งคำขอ</Button>
+            <Button type="submit" size="lg" fullWidth className="mt-6" isLoading={createRequest.isPending} loadingText="กำลังส่งคำขอ…" leftIcon={<Send className="h-5 w-5" aria-hidden />}>ส่งคำขอเบิกพัสดุ</Button>
+            <p className="mt-3 text-center text-sm text-ink-light">ส่งแล้วยังกดยกเลิกคำขอได้ในหน้าติดตาม</p>
+            {createRequest.isError && <p role="alert" className="mt-4 rounded-xl bg-danger-50 p-3 text-base font-semibold text-danger-800">{getErrorMessage(createRequest.error, 'ส่งคำขอไม่สำเร็จ กรุณาลองใหม่')}</p>}
           </section>
         </div>
       </form>
@@ -249,21 +285,6 @@ export function SupplyCartForm({ onNavigate }: { onNavigate: (route: SupplyRoute
         toast.success('บันทึกการแก้ไขแล้ว', value.name);
       }} />
 
-      <Modal open={confirmOpen} onClose={() => setConfirmOpen(false)} dismissible={!createRequest.isPending} labelledBy="confirm-request-title">
-        <h2 id="confirm-request-title" className="font-display text-2xl font-bold text-ink">ยืนยันการส่งคำขอ</h2>
-        <p className="mt-2 text-base leading-relaxed text-ink-light">เมื่อส่งแล้ว เจ้าหน้าที่จะเริ่มตรวจรายการภายในระบบจำลอง</p>
-        <dl className="mt-5 space-y-3 rounded-xl bg-slate-50 p-4 text-base">
-          <SummaryRow label="ผู้ขอ" value={profile.data.fullName} />
-          <SummaryRow label="กิจกรรม" value={values.activityName} />
-          <SummaryRow label="วันที่ต้องการรับ" value={formatThaiDate(values.requestedPickupDate)} />
-          <SummaryRow label="จำนวนรวม" value={`${cart.length} รายการ · ${totalPieces} ชิ้น`} />
-        </dl>
-        {createRequest.isError && <p role="alert" className="mt-4 rounded-xl bg-danger-50 p-3 text-base font-semibold text-danger-800">{getErrorMessage(createRequest.error, 'ส่งคำขอไม่สำเร็จ กรุณาลองใหม่')}</p>}
-        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <Button type="button" variant="ghost" disabled={createRequest.isPending} onClick={() => setConfirmOpen(false)}>กลับไปแก้ไข</Button>
-          <Button type="button" isLoading={createRequest.isPending} loadingText="กำลังส่งคำขอ…" leftIcon={<Send className="h-5 w-5" aria-hidden />} onClick={() => void handleConfirm()}>ยืนยันส่งคำขอ</Button>
-        </div>
-      </Modal>
     </>
   );
 }
@@ -274,8 +295,4 @@ function FieldWithError({ label, id, error, children }: { label: string; id: str
 
 function ReadOnlyDetail({ label, value }: { label: string; value: string }) {
   return <div><dt className="text-sm font-semibold text-primary-800">{label}</dt><dd className="mt-1 font-bold text-ink">{value}</dd></div>;
-}
-
-function SummaryRow({ label, value }: { label: string; value: string }) {
-  return <div className="grid grid-cols-[7rem_1fr] gap-3"><dt className="text-ink-light">{label}</dt><dd className="font-semibold text-ink">{value}</dd></div>;
 }
