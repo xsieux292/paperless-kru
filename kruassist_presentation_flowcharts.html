@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KruAssist - Architecture & Roadmap Flowcharts</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .slide-card {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            margin-bottom: 2rem;
+            padding: 2rem;
+            overflow: hidden;
+        }
+        .mermaid {
+            display: flex;
+            justify-content: center;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+        }
+        .speaker-notes {
+            background-color: #f8fafc;
+            border-left: 4px solid #3b82f6;
+            padding: 1rem 1.5rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+            margin-top: 1.5rem;
+        }
+    </style>
+</head>
+<body class="text-gray-800 p-4 md:p-8">
+
+    <div class="max-w-5xl mx-auto">
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">📊 แผนภาพและโครงสร้างเพื่อการนำเสนอ</h1>
+            <p class="text-gray-600 text-lg">KruAssist Architecture & Roadmap</p>
+        </header>
+
+        <!-- Slide 1 -->
+        <div class="slide-card">
+            <h2 class="text-xl font-bold text-blue-700 border-b pb-2 mb-4">1. โครงสร้างระบบ KruAssist (สถานะปัจจุบัน)</h2>
+            <p class="text-gray-600 mb-4"><strong>จุดประสงค์:</strong> เพื่อให้ผู้ฟังเห็นภาพว่า Frontend สร้างเสร็จแล้ว และมีการจัดการสถาปัตยกรรมที่พร้อมสลับไปใช้ Backend จริงได้อย่างไร</p>
+            
+            <div class="mermaid">
+                graph TD
+                subgraph UI_Layer ["1. UI Layer (หน้าจอผู้ใช้ - เสร็จ 100%)"]
+                    WEB[เว็บแอปพลิเคชัน<br>index.html]
+                    LINE[Prototype LINE OA<br>line-demo.html]
+                end
+
+                subgraph Logic_Layer ["2. State & Cache Layer"]
+                    HOOKS["React Hooks & TanStack Query<br>(useJobs, useRequisitions)<br><i>จัดการ Cache, Polling อัตโนมัติ</i>"]
+                end
+
+                subgraph API_Layer ["3. API Single Point of Contact"]
+                    API_END["src/api/*.api.ts<br><i>(แปลงข้อมูล, จุดเชื่อมต่อเดียว)</i>"]
+                    HTTP["http.ts<br><i>(จัดการ Timeout, Token, Errors)</i>"]
+                end
+
+                subgraph Data_Layer ["4. Data Layer (ควบคุมด้วย .env)"]
+                    direction LR
+                    MOCK[("Mock Server<br><i>(จำลองการทำงานใน Browser)</i>")]
+                    REAL[("Real Backend<br><i>(ระบบจริงที่ต้องพัฒนาต่อ)</i>")]
+                end
+                
+                %% Connections
+                WEB --> HOOKS
+                LINE --> HOOKS
+                HOOKS --> API_END
+                API_END --> HTTP
+                
+                HTTP -- "VITE_USE_MOCK = true" --> MOCK
+                HTTP -- "VITE_USE_MOCK = false" ---> REAL
+
+                %% Styling
+                classDef finished fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#155724;
+                classDef pending fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#721c24;
+                classDef core fill:#cce5ff,stroke:#007bff,stroke-width:2px,color:#004085;
+                
+                class WEB,LINE,HOOKS,API_END,HTTP,MOCK finished;
+                class REAL pending;
+            </div>
+
+            <div class="speaker-notes">
+                <h3 class="font-bold flex items-center mb-2">
+                    <span class="mr-2">🗣️</span> คำบรรยายสำหรับผู้นำเสนอ (Speaker Notes)
+                </h3>
+                <p class="text-gray-700 italic">"ภาพนี้คือสถาปัตยกรรมของ KruAssist ปัจจุบันครับ ฝั่งซ้ายคือ UI ที่เสร็จสมบูรณ์ 100% ทั้งบนเว็บและ LINE ข้อดีของโครงสร้างนี้คือ <strong>'โค้ดฝั่ง UI จะไม่รู้จัก URL ของ Backend เลย'</strong> ทุกอย่างจะวิ่งผ่าน API Layer ตรงกลางจุดเดียว ปัจจุบันระบบวิ่งเข้า Mock Server แต่เมื่อ Backend จริงพร้อม เราแค่เปลี่ยนค่าสวิตช์ในไฟล์ .env ระบบก็จะชี้ไปหา Backend จริงทันทีโดยไม่ต้องแก้โค้ดหน้าจอเลยครับ"</p>
+            </div>
+        </div>
+
+        <!-- Slide 2 -->
+        <div class="slide-card">
+            <h2 class="text-xl font-bold text-blue-700 border-b pb-2 mb-4">2. การทำงานแบบ Asynchronous ของระบบ AI</h2>
+            <p class="text-gray-600 mb-4"><strong>จุดประสงค์:</strong> อธิบายว่า Frontend สื่อสารกับ AI อย่างไรโดยที่หน้าเว็บไม่ค้าง และครูไม่ต้องกดรีเฟรชหน้าจอเอง</p>
+            
+            <div class="mermaid">
+                sequenceDiagram
+                participant U as User (ครู)
+                participant F as Frontend (UI & Hook)
+                participant B as Backend / AI
+
+                U->>F: อัปโหลดใบเสร็จ / พิมพ์สั่งงาน
+                F->>B: POST /jobs (ส่งไฟล์/ข้อมูล แบบ Multipart)
+                
+                Note over B: Backend รับคิวงาน <br>ยังไม่ประมวลผล AI ทันที
+                B-->>F: ตอบกลับทันที (Job ID, Status: "queued")
+                F-->>U: แสดงหน้าจอ "กำลังประมวลผล..."
+                
+                rect rgb(240, 248, 255)
+                    Note over F,B: ระบบ Polling (ดึงข้อมูลอัตโนมัติ ทุก 3 วินาที)
+                    loop ทุกๆ 3 วินาที (VITE_JOB_POLL_INTERVAL_MS)
+                        F->>B: GET /jobs/{id} (ถามสถานะงาน)
+                        B-->>F: Status: "processing", Progress: 45%
+                        F-->>U: อัปเดต Progress Bar 45%
+                    end
+                end
+                
+                Note over B: AI ประมวลผลเสร็จสิ้น
+                F->>B: GET /jobs/{id} (รอบสุดท้าย)
+                B-->>F: Status: "succeeded", Data: AI Draft + Confidence Score
+                
+                Note over F: ไฮไลต์สีส้ม ในช่องที่ AI ให้ Confidence = "Low"
+                F-->>U: แสดงผลลัพธ์ให้ครูตรวจสอบและกดบันทึก
+            </div>
+
+            <div class="speaker-notes">
+                <h3 class="font-bold flex items-center mb-2">
+                    <span class="mr-2">🗣️</span> คำบรรยายสำหรับผู้นำเสนอ (Speaker Notes)
+                </h3>
+                <p class="text-gray-700 italic">"เนื่องจากการประมวลผล AI (เช่น อ่าน OCR) ใช้เวลา ระบบจึงออกแบบมาเป็น Asynchronous เมื่อครูอัปโหลดเอกสาร Backend จะรับคิวและตอบกลับทันที จากนั้น Frontend จะทำการ Polling หรือถามสถานะงานทุกๆ 3 วินาทีอัตโนมัติ เพื่ออัปเดต Progress Bar พอ AI ทำงานเสร็จ ระบบจะส่งผลลัพธ์กลับมา พร้อมกับค่า <strong>Confidence Score</strong> เพื่อให้หน้าจอไฮไลต์สีส้มในจุดที่ AI ไม่มั่นใจ ช่วยให้ครูตรวจสอบงานได้เร็วขึ้นครับ"</p>
+            </div>
+        </div>
+
+        <!-- Slide 3 -->
+        <div class="slide-card">
+            <h2 class="text-xl font-bold text-blue-700 border-b pb-2 mb-4">3. 4 ขั้นตอนการเชื่อมต่อ Backend จริง (Roadmap)</h2>
+            <p class="text-gray-600 mb-4"><strong>จุดประสงค์:</strong> เป็น Guideline สำหรับนักพัฒนาที่จะมารับช่วงต่อ ว่าต้องเริ่มตรงไหน และมีความท้าทายอะไรบ้าง</p>
+            
+            <div class="mermaid">
+                flowchart LR
+                subgraph Steps ["ขั้นตอนสำหรับ Backend Developer"]
+                    direction TB
+                    S1["1. ตั้งค่า Environment<br>(แก้ .env เปลี่ยน VITE_USE_MOCK=false)"]
+                    S2["2. ปรับ Data Mapping<br>(แก้ฟังก์ชัน normalize* ใน api.ts <br>เพื่อให้ชื่อ Field ตรงกับ Database)"]
+                    S3["3. เชื่อมต่อระบบ Auth<br>(ทำหน้า Login และปรับ <br>authHeaders ใน http.ts)"]
+                    S4["4. ลบ Mock Server<br>(ลบโฟลเดอร์ src/api/mock/)"]
+                    
+                    S1 --> S2 --> S3 --> S4
+                end
+
+                subgraph Todo ["ฟีเจอร์หลักที่ Backend ต้องพัฒนา (To-Do)"]
+                    direction TB
+                    F1("🔐 Auth/SSO (เชื่อมระบบโรงเรียน)")
+                    F2("⚙️ Job Queue & File Storage")
+                    F3("🤖 AI: OCR ใบเสร็จ & LLM ร่างเอกสาร")
+                    F4("✍️ e-Signature + OTP")
+                    F5("💬 LINE Messaging API")
+                end
+
+                S4 ===> F1
+                
+                style S1 fill:#fff3cd,stroke:#ffc107,stroke-width:2px
+                style S2 fill:#fff3cd,stroke:#ffc107,stroke-width:2px
+                style S3 fill:#fff3cd,stroke:#ffc107,stroke-width:2px
+                style S4 fill:#fff3cd,stroke:#ffc107,stroke-width:2px
+                style F3 fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#721c24
+                style F4 fill:#f8d7da,stroke:#dc3545,stroke-width:2px,color:#721c24
+            </div>
+
+            <div class="speaker-notes">
+                <h3 class="font-bold flex items-center mb-2">
+                    <span class="mr-2">🗣️</span> คำบรรยายสำหรับผู้นำเสนอ (Speaker Notes)
+                </h3>
+                <p class="text-gray-700 italic">"สำหรับทีมงานที่จะมารับช่วงต่อ การเอา Backend จริงมาต่อกับหน้าเว็บมีเพียง 4 ขั้นตอนสั้นๆ (กล่องสีเหลือง) โดยโฟกัสแก้ไฟล์แค่ 3 จุดเท่านั้น ไม่ต้องยุ่งกับโค้ด UI เลย <br><br>ส่วนสิ่งที่ต้องพัฒนาต่อ (กล่องด้านขวา) งานที่ท้าทายที่สุดและต้องให้ความสำคัญก่อนคือ <strong>ความแม่นยำของ OCR ลายมือภาษาไทย</strong> และ <strong>ผลทางกฎหมายของการทำ e-Signature สำหรับเอกสารราชการ</strong> ซึ่งเป็นความเสี่ยงทางเทคนิคที่เราต้องทดสอบและหาข้อสรุปก่อนเปิดใช้งานจริงครับ"</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Mermaid.js for rendering diagrams -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            fontFamily: 'Sarabun, sans-serif'
+        });
+    </script>
+</body>
+</html>

@@ -1,5 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowUpRight, PenLine, Send, Sparkles } from 'lucide-react';
+import {
+  ArrowUpRight,
+  Brain,
+  Cloud,
+  Database,
+  PenLine,
+  Send,
+  ShieldCheck,
+  Sparkles,
+} from 'lucide-react';
 import { toFriendlyMessage } from '@/api/http';
 import { getReceiptCategories } from '@/api/catalog.api';
 import { DEFAULT_MODE, DOCUMENT_MODES } from '@/constants/documentModes';
@@ -52,8 +61,17 @@ import { FLOW_SEQUENCE, STEPS, type FlowId, type StepId } from './journey';
 import { usePlanningQuestions, useGenerateActivityBudget } from '@/hooks/useActivityPlanning';
 
 const INITIAL_PLAN_FORM: ActivityPlanForm = {
-  eventName: '', objective: '', eventDate: '', venue: '', durationHours: '',
-  students: '', parents: '', teachers: '', guests: '', budget: '', agenda: '',
+  eventName: '',
+  objective: '',
+  eventDate: '',
+  venue: '',
+  durationHours: '',
+  students: '',
+  parents: '',
+  teachers: '',
+  guests: '',
+  budget: '',
+  agenda: '',
 };
 
 /** ข้อความตั้งต้นในห้องแชท ก่อนครูเริ่มทำอะไร */
@@ -65,17 +83,38 @@ function initialChat(): ChatItem[] {
       id: 'm1',
       from: 'oa',
       time: '07:30',
-      text: 'สวัสดีเช้าวันจันทร์ค่ะ คุณครูสมศรี 🌤️ สัปดาห์นี้มีเอกสารรอคุณครูเซ็น 3 ฉบับนะคะ',
+      text: 'สวัสดีค่ะคุณครูสมศรี KruAssist พร้อมช่วยทั้ง Doc Done และ Kru Done จากฐานข้อมูลเดียวกันค่ะ',
     },
     {
       kind: 'text',
       id: 'm2',
       from: 'oa',
       time: '07:30',
-      text: 'มีใบเสร็จที่ยังไม่ได้ลงบัญชีไหมคะ? แตะเมนูด้านล่างได้เลยค่ะ',
+      text: 'Doc Done ช่วย Snap. Sign. Done. ส่วน Kru Done ช่วย Smart. Seamless. Done. แตะเมนูล่างจอเพื่อเริ่มได้เลยค่ะ',
     },
   ];
 }
+
+const MODULES = [
+  {
+    name: 'Doc Done',
+    tagline: 'Snap. Sign. Done.',
+    description: 'ลดเวลางานเอกสารด้วย Auto-Fill, Auto Portfolio ว.PA และ AI Advisor',
+  },
+  {
+    name: 'Kru Done',
+    tagline: 'Smart. Seamless. Done.',
+    description: 'จบภาระกิจกรรม เบิกจ่าย และแผนการสอนในที่เดียว',
+  },
+] as const;
+
+const TECH_STACK = [
+  { icon: Brain, label: 'OCR + LLM' },
+  { icon: Database, label: 'RAG ระเบียบพัสดุ' },
+  { icon: PenLine, label: 'e-Sign + OTP' },
+  { icon: Cloud, label: 'Cloud infrastructure' },
+  { icon: ShieldCheck, label: 'PDPA security' },
+] as const;
 
 const AUTOPLAY_MS = 3600;
 
@@ -161,7 +200,7 @@ export function LineDemoApp() {
   const createRequisition = useCreateRequisition();
   const suggest = useSuggestItems();
   const drafting = useDraftRequisition();
-  
+
   const planningQuestionsQuery = usePlanningQuestions();
   // AI เติมข้อมูลกิจกรรมให้จากประโยคเดียว
   const [planDescription, setPlanDescription] = useState('');
@@ -425,7 +464,16 @@ export function LineDemoApp() {
     }, AUTOPLAY_MS);
 
     return () => window.clearTimeout(timer);
-  }, [isPlaying, stepId, flow, goTo, pushSummaryCard, pushSignedCard, templates.data, projects.data]);
+  }, [
+    isPlaying,
+    stepId,
+    flow,
+    goTo,
+    pushSummaryCard,
+    pushSignedCard,
+    templates.data,
+    projects.data,
+  ]);
 
   const jumpTo = useCallback(
     (target: StepId) => {
@@ -473,10 +521,10 @@ export function LineDemoApp() {
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
           <div className="min-w-0">
             <h1 className="font-display text-heading text-ink">
-              KruAssist บน LINE OA — Prototype สำหรับนำเสนอ
+              KruAssist — ผู้ช่วยครูที่ลดงานเอกสารและต่อยอดความก้าวหน้าในอาชีพ
             </h1>
             <p className="mt-0.5 text-base text-ink-light">
-              ฟังก์ชันครบเท่าหน้าเว็บ ใช้ API layer และชุดข้อมูลตั้งต้นเดียวกัน · ทั้งหมดเป็นข้อมูลจำลอง
+              Prototype บน LINE OA แบ่งเป็น 2 โมดูลบนฐานข้อมูลเดียวกัน · ทั้งหมดเป็นข้อมูลจำลอง
             </p>
           </div>
 
@@ -489,6 +537,44 @@ export function LineDemoApp() {
           </a>
         </div>
       </header>
+
+      <section className="border-b border-slate-200 bg-white">
+        <div className="mx-auto grid max-w-7xl gap-4 px-4 py-4 sm:px-6 lg:grid-cols-[1fr_1.15fr]">
+          <div className="grid gap-3 sm:grid-cols-2">
+            {MODULES.map((module) => (
+              <div key={module.name} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <p className="font-display text-[18px] font-bold text-ink">{module.name}</p>
+                <p className="mt-1 font-display text-[13px] font-bold text-primary-700">
+                  {module.tagline}
+                </p>
+                <p className="mt-2 text-[13px] leading-relaxed text-ink-light">
+                  {module.description}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <div className="rounded-lg border border-slate-200 bg-white p-4">
+            <p className="font-display text-[14px] font-bold text-ink">
+              Tech stack ที่ใช้เล่าใน demo
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {TECH_STACK.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <span
+                    key={item.label}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-[12px] font-semibold text-ink-light"
+                  >
+                    <Icon className="h-4 w-4 text-primary-700" aria-hidden />
+                    {item.label}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </section>
 
       <main className="mx-auto flex max-w-7xl flex-col items-start gap-8 px-4 py-8 sm:px-6 lg:flex-row lg:justify-center">
         <div className="relative mx-auto lg:mx-0">
@@ -503,8 +589,6 @@ export function LineDemoApp() {
                   const next = tab === 'teachgrow' ? 'teachgrow' : 'docdone';
                   setMenuTab(next);
                   setMenuCollapsed(false);
-                  setStepId('chat-idle');
-                  setFlow(next);
                 }}
                 onTapCamera={() => openMenuScreen('liff-camera')}
                 onTapUpload={() => openMenuScreen('liff-upload-mode')}
@@ -515,7 +599,9 @@ export function LineDemoApp() {
                 onTapPlanning={() => openMenuScreen('liff-plan-info')}
                 onTapPortfolio={() => openMenuScreen('liff-portfolio')}
                 onTapUnavailable={(label) =>
-                  setToast(`“${label}” อยู่ใน Phase 2 ของแผนพัฒนา ยังไม่ได้ทำใน prototype นี้ค่ะ`)
+                  setToast(
+                    `“${label}” แสดงเป็นเมนูใน pitch แล้ว แต่ยังไม่เปิดหน้าจอใน prototype นี้ค่ะ`,
+                  )
                 }
                 pendingSignatures={3 - signedIds.length}
                 collapsed={menuCollapsed}
@@ -525,14 +611,19 @@ export function LineDemoApp() {
 
             {/* ---------- Flow A: ถ่ายใบเสร็จ ---------- */}
             {stepId === 'liff-camera' && (
-              <LiffSheet variant="camera" title="ถ่ายใบเสร็จ" onBack={closeLiff} onClose={closeLiff}>
+              <LiffSheet
+                variant="camera"
+                title="Auto-Fill เอกสาร"
+                onBack={closeLiff}
+                onClose={closeLiff}
+              >
                 <CameraScreen onShoot={() => goTo('liff-ocr')} />
               </LiffSheet>
             )}
 
             {stepId === 'liff-ocr' && (
               <LiffSheet
-                title="ตรวจข้อมูลจากใบเสร็จ"
+                title="ยืนยันข้อมูลที่ OCR อ่านได้"
                 step={{ current: 1, total: 2 }}
                 onBack={() => goTo('liff-camera')}
                 onClose={closeLiff}
@@ -611,7 +702,9 @@ export function LineDemoApp() {
                 }
               >
                 <OtpScreen
-                  amount={signingDoc ? `${signingDoc.amount.toLocaleString('th-TH')}.00` : '1,250.00'}
+                  amount={
+                    signingDoc ? `${signingDoc.amount.toLocaleString('th-TH')}.00` : '1,250.00'
+                  }
                   budgetName={projectName ?? 'งบพัสดุหมวดวิชา'}
                   otp={otp}
                   onOtpChange={setOtp}
@@ -622,7 +715,7 @@ export function LineDemoApp() {
             {/* ---------- Flow: ส่งเอกสารให้ AI ---------- */}
             {stepId === 'liff-upload-mode' && (
               <LiffSheet
-                title="ส่งเอกสารให้ AI"
+                title="ส่งแบบฟอร์มให้ AI"
                 step={{ current: 1, total: 3 }}
                 onBack={closeLiff}
                 onClose={closeLiff}
@@ -722,7 +815,7 @@ export function LineDemoApp() {
             {/* ---------- Flow: เบิกงบ / ยืมพัสดุ (AI ร่างให้ก่อน) ---------- */}
             {stepId === 'liff-req-tell' && (
               <LiffSheet
-                title="เบิกงบ / ยืมพัสดุ"
+                title="เลือก เบิก จบ"
                 onBack={closeLiff}
                 onClose={closeLiff}
                 footer={
@@ -788,7 +881,7 @@ export function LineDemoApp() {
 
             {stepId === 'liff-req-info' && (
               <LiffSheet
-                title="เบิกงบ / ยืมพัสดุ"
+                title="เลือก เบิก จบ"
                 step={{ current: 1, total: 3 }}
                 onBack={closeLiff}
                 onClose={closeLiff}
@@ -881,7 +974,7 @@ export function LineDemoApp() {
             {/* ---------- Flow: วางแผนงบกิจกรรม ---------- */}
             {stepId === 'liff-plan-info' && (
               <LiffSheet
-                title="วางแผนงบกิจกรรม"
+                title="AI ช่วยงานจัดกิจกรรม"
                 step={{ current: 1, total: 3 }}
                 onBack={closeLiff}
                 onClose={closeLiff}
@@ -928,10 +1021,10 @@ export function LineDemoApp() {
                     onClick={() => {
                       const q = planningQuestionsQuery.data?.[planQuestionIndex];
                       if (!q) return;
-                      setPlanAnswers(prev => ({ ...prev, [q.id]: planDraftAnswer }));
+                      setPlanAnswers((prev) => ({ ...prev, [q.id]: planDraftAnswer }));
                       setPlanDraftAnswer('');
                       if (planQuestionIndex + 1 < (planningQuestionsQuery.data?.length ?? 0)) {
-                        setPlanQuestionIndex(prev => prev + 1);
+                        setPlanQuestionIndex((prev) => prev + 1);
                       } else {
                         generateBudgetMutation.mutate(
                           { form: planForm, answers: planAnswers },
@@ -939,8 +1032,8 @@ export function LineDemoApp() {
                             onSuccess: (data) => {
                               setPlanGenerated(data);
                               goTo('liff-plan-budget');
-                            }
-                          }
+                            },
+                          },
                         );
                       }
                     }}
@@ -1021,7 +1114,7 @@ export function LineDemoApp() {
 
             {stepId === 'liff-portfolio' && (
               <LiffSheet
-                title="แฟ้มสะสมงาน ว.PA"
+                title="Auto Portfolio ว.PA"
                 onBack={closeLiff}
                 onClose={closeLiff}
                 footer={<LiffPrimaryButton tone="grow">Export PDF ตามแบบ ว.PA</LiffPrimaryButton>}

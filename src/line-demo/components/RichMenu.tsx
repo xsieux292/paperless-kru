@@ -1,7 +1,8 @@
 import {
   BarChart3,
+  BellRing,
   Calculator,
-  Camera,
+  ClipboardCheck,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -10,8 +11,8 @@ import {
   FileText,
   FolderOpen,
   PenLine,
+  ScanLine,
   Trophy,
-  Wallet,
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
@@ -27,7 +28,9 @@ import type { FlowId } from '../journey';
  *   - เส้นแบ่งช่องหนา 3px เพื่อสื่อว่าแตะได้เป็นช่อง ๆ
  *   - ④ ทุกช่องมีไอคอน + ข้อความ ห้ามไอคอนเดี่ยว
  *
- * ทุกช่องในแท็บ A ใช้งานได้จริงทั้งหมด (ครบเท่าหน้าเว็บ)
+ * แท็บหลักจัดตาม pitch ใหม่:
+ *   - Doc Done: งานเอกสาร / ว.PA / advisor
+ *   - Kru Done: กิจกรรม / เบิกจ่าย / แผนการสอน / noti
  */
 
 interface Cell {
@@ -62,7 +65,6 @@ export function RichMenu({
   onTapUpload,
   onTapPendingSign,
   onTapRequisition,
-  onTapJobs,
   onTapHowTo,
   onTapPlanning,
   onTapPortfolio,
@@ -72,22 +74,22 @@ export function RichMenu({
   onToggleCollapsed,
 }: RichMenuProps) {
   const docDoneCells: Cell[] = [
-    { icon: Camera, label: 'ถ่ายใบเสร็จ', featured: true, onTap: onTapCamera },
-    { icon: Calculator, label: 'วางแผนงบกิจกรรม', onTap: onTapPlanning },
+    { icon: ScanLine, label: 'Auto-Fill เอกสาร', featured: true, onTap: onTapCamera },
+    { icon: FileText, label: 'ส่งแบบฟอร์มให้ AI', onTap: onTapUpload },
+    { icon: FolderOpen, label: 'Auto Portfolio ว.PA', onTap: onTapPortfolio },
+    { icon: Trophy, label: 'AI Advisor', onTap: () => onTapUnavailable('AI Advisor') },
     { icon: PenLine, label: 'รอฉันเซ็น', badge: pendingSignatures, onTap: onTapPendingSign },
-    { icon: Wallet, label: 'เบิกงบ / ยืมพัสดุ', onTap: onTapRequisition },
-    { icon: FolderOpen, label: 'งานของฉัน', onTap: onTapJobs },
   ];
 
-  const teachGrowCells: Cell[] = [
-    { icon: FolderOpen, label: 'แฟ้ม ว.PA', featured: true, onTap: onTapPortfolio },
-    { icon: FileText, label: 'ส่งเอกสารให้ AI', onTap: onTapUpload },
-    { icon: Trophy, label: 'งานแข่ง / อบรม', onTap: () => onTapUnavailable('งานแข่ง / อบรม') },
-    { icon: BarChart3, label: 'ผลนักเรียน', onTap: () => onTapUnavailable('ผลนักเรียน') },
+  const kruDoneCells: Cell[] = [
+    { icon: Calculator, label: 'AI จัดกิจกรรม', featured: true, onTap: onTapPlanning },
+    { icon: ClipboardCheck, label: 'เลือก เบิก จบ', onTap: onTapRequisition },
+    { icon: BarChart3, label: 'Smart Syllabus', onTap: () => onTapUnavailable('Smart Syllabus') },
+    { icon: BellRing, label: 'Kru-Noti', onTap: () => onTapUnavailable('Kru-Noti') },
     { icon: CircleHelp, label: 'วิธีใช้งาน', onTap: onTapHowTo },
   ];
 
-  const cells = tab === 'docdone' ? docDoneCells : teachGrowCells;
+  const cells = tab === 'docdone' ? docDoneCells : kruDoneCells;
   const isDocDone = tab === 'docdone';
 
   // แถบล่างตอนพับเมนู — เหมือนช่องพิมพ์ข้อความของ LINE
@@ -145,7 +147,7 @@ export function RichMenu({
           <span className="flex items-center gap-1 text-[11px] font-bold leading-tight">
             {isDocDone ? (
               <>
-                Teach &amp; Grow <ChevronRight className="h-3.5 w-3.5" aria-hidden />
+                Kru Done <ChevronRight className="h-3.5 w-3.5" aria-hidden />
               </>
             ) : (
               <>

@@ -8,7 +8,15 @@ import { cn } from '@/lib/cn';
 
 export type ChatItem =
   | { kind: 'text'; id: string; from: 'oa' | 'user'; text: string; time: string }
-  | { kind: 'receipt-summary'; id: string; time: string; amount: string; vendor: string; budget: string; onSign: () => void }
+  | {
+      kind: 'receipt-summary';
+      id: string;
+      time: string;
+      amount: string;
+      vendor: string;
+      budget: string;
+      onSign: () => void;
+    }
   | { kind: 'signed-proof'; id: string; time: string; docNo: string; amount: string }
   | { kind: 'system'; id: string; text: string };
 
@@ -88,7 +96,7 @@ function ChatRow({ item }: { item: ChatItem }) {
         <div className="bg-primary-600 px-4 py-2.5">
           <p className="flex items-center gap-1.5 text-[12px] font-bold text-white">
             <Receipt className="h-4 w-4" aria-hidden />
-            อ่านใบเสร็จเรียบร้อยแล้ว
+            Auto-Fill เอกสารเรียบร้อยแล้ว
           </p>
         </div>
 
@@ -109,7 +117,7 @@ function ChatRow({ item }: { item: ChatItem }) {
           </div>
 
           <p className="text-[11px] leading-relaxed text-ink-light">
-            ระบบร่างใบเบิกให้แล้ว เหลือขั้นตอนเซ็นยืนยันของคุณครูค่ะ
+            ระบบดึงข้อมูลเข้าแบบฟอร์มกลางแล้ว เหลือขั้นตอนเซ็นยืนยันของคุณครูค่ะ
           </p>
         </div>
 

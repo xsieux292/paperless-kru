@@ -1,4 +1,13 @@
-import { Camera, CheckCircle2, Download, Inbox, MousePointerClick, PenLine, Phone, Send } from 'lucide-react';
+import {
+  Camera,
+  CheckCircle2,
+  Download,
+  Inbox,
+  MousePointerClick,
+  PenLine,
+  Phone,
+  Send,
+} from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { env } from '@/config/env';
 import { PENDING_DOCS, type PendingDoc } from '../data/pendingDocs';
@@ -81,23 +90,23 @@ interface HelpStep {
 const HELP_STEPS: HelpStep[] = [
   {
     icon: MousePointerClick,
-    title: '1. เลือกงานจากเมนูล่างจอ',
-    detail: 'เมนู 6 ช่องอยู่ล่างจอตลอด ช่องซ้ายบนคืองานที่ใช้บ่อยที่สุด',
+    title: '1. เลือกโมดูลจากเมนูล่างจอ',
+    detail: 'Doc Done ใช้กับงานเอกสาร ส่วน Kru Done ใช้กับกิจกรรม เบิกจ่าย และแผนการสอน',
   },
   {
     icon: Camera,
-    title: '2. ถ่ายรูปหรือเลือกของที่เคยส่งไว้',
-    detail: 'ถ้าเป็นแบบฟอร์มเดิม เลือกจากรายการได้เลย ไม่ต้องหาไฟล์ใหม่',
+    title: '2. สแกน เลือก หรือเล่าให้ AI ฟัง',
+    detail: 'ระบบใช้ OCR และ AI เติมข้อมูลตั้งต้นให้ก่อน คุณครูค่อยตรวจเฉพาะจุดสำคัญ',
   },
   {
     icon: Send,
-    title: '3. กดปุ่มเขียวล่างจอเพื่อส่ง',
-    detail: 'ระบบสรุปให้ดูก่อนทุกครั้ง ถ้าถูกต้องแล้วกดยืนยัน แล้วปิดแชทไปพักได้เลย',
+    title: '3. ยืนยัน แล้วให้ระบบจัดการต่อ',
+    detail: 'เอกสาร ใบเบิก และแผนงบจะมีสถานะติดตามได้ ลดการเดินกระดาษและงานซ้ำ',
   },
   {
     icon: Download,
-    title: 'รับไฟล์ที่ AI ทำเสร็จ',
-    detail: 'เข้าช่อง “งานของฉัน” ไฟล์ที่เสร็จแล้วจะมีปุ่มดาวน์โหลดให้กด',
+    title: 'รับไฟล์หรือแจ้งเตือนใน LINE',
+    detail: 'งานที่เสร็จแล้วและ deadline สำคัญจะกลับมาอยู่ในแชทหรือหน้า “งานของฉัน”',
   },
 ];
 
@@ -105,7 +114,9 @@ const HELP_STEPS: HelpStep[] = [
 export function HowToScreen() {
   return (
     <div className="space-y-3">
-      <SectionTitle hint="ไม่ต้องติดตั้งอะไรเพิ่ม ทำตามนี้ได้เลยค่ะ">วิธีใช้งาน ง่าย ๆ 3 ขั้นตอน</SectionTitle>
+      <SectionTitle hint="ไม่ต้องติดตั้งอะไรเพิ่ม ทำตามนี้ได้เลยค่ะ">
+        วิธีใช้งาน KruAssist
+      </SectionTitle>
 
       <ol className="space-y-2">
         {HELP_STEPS.map((step) => {

@@ -12,7 +12,7 @@ import {
 } from '../components/MobileUi';
 
 /**
- * "เบิกงบ / ยืมพัสดุ" เวอร์ชัน LIFF — Flow B ในแผน UX
+ * "เลือก เบิก จบ" เวอร์ชัน LIFF — Flow B ในแผน UX
  * ใช้ hooks และ mock API ชุดเดียวกับหน้าเว็บ ใบเบิกที่สร้างจึงเป็นใบเดียวกัน
  */
 
@@ -43,7 +43,9 @@ export function RequisitionInfoScreen({
   return (
     <div className="space-y-4">
       <div>
-        <SectionTitle>จะทำเรื่องอะไรคะ?</SectionTitle>
+        <SectionTitle hint="เลือกของ ส่งตรวจ และติดตามสถานะได้ในเส้นทางเดียว">
+          จะทำเรื่องอะไรคะ?
+        </SectionTitle>
         <div role="radiogroup" aria-label="ประเภทคำขอ" className="space-y-2">
           <SelectableRow
             selected={kind === 'budget'}
@@ -73,7 +75,9 @@ export function RequisitionInfoScreen({
       </Field>
 
       <div>
-        <SectionTitle hint="เห็นงบคงเหลือได้เลย ไม่ต้องไปเปิดดูที่อื่น">เบิกจากโครงการไหน?</SectionTitle>
+        <SectionTitle hint="เห็นงบคงเหลือได้เลย ไม่ต้องไปเปิดดูที่อื่น">
+          เบิกจากโครงการไหน?
+        </SectionTitle>
 
         {projects.isLoading && <RowSkeleton count={2} />}
 
@@ -124,15 +128,15 @@ export function RequisitionItemsScreen({
 
   return (
     <div className="space-y-3">
-      <SectionTitle hint="ให้ AI ตั้งต้นให้ก่อน แล้วค่อยตัดที่ไม่ต้องการออก">
+      <SectionTitle hint="ให้ AI ตั้งต้นรายการและราคาอ้างอิง แล้วคุณครูตรวจก่อนส่ง">
         {showPrice ? 'จะซื้ออะไรบ้างคะ?' : 'จะยืมอะไรบ้างคะ?'}
       </SectionTitle>
 
       {/* จุดขายของ flow นี้ — ปุ่ม AI เด่นกว่าปุ่มเพิ่มเอง */}
       <div className="rounded-xl border-2 border-primary-200 bg-primary-50 p-3">
-        <p className="font-display text-[14px] font-bold text-ink">ไม่รู้จะเบิกอะไรบ้าง?</p>
+        <p className="font-display text-[14px] font-bold text-ink">ไม่รู้ต้องใช้ของอะไรบ้าง?</p>
         <p className="mb-2 mt-0.5 text-[12px] text-ink-light">
-          บอก AI สั้น ๆ ว่าจะจัดกิจกรรมอะไร แล้วให้ช่วยคิดรายการกับราคาให้
+          บอก AI สั้น ๆ ว่าจะจัดกิจกรรมอะไร แล้วให้ช่วยคิดรายการ ราคาอ้างอิง และเหตุผลให้
         </p>
         <button
           type="button"
@@ -261,7 +265,9 @@ export function RequisitionApproverScreen({
   return (
     <div className="space-y-4">
       <div>
-        <SectionTitle hint="ระบบส่งให้เอง ครูไม่ต้องเดินเอกสาร">ส่งให้ใครเซ็นอนุมัติคะ?</SectionTitle>
+        <SectionTitle hint="ระบบส่งให้เอง ครูไม่ต้องเดินเอกสาร">
+          ส่งให้ใครเซ็นอนุมัติคะ?
+        </SectionTitle>
 
         {approvers.isLoading && <RowSkeleton count={3} />}
         {approvers.isError && (

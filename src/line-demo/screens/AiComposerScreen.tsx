@@ -31,10 +31,10 @@ export function AiComposerInputScreen({
         </span>
         <div>
           <h2 className="font-display text-[16px] font-bold leading-snug text-ink">
-            เล่าให้ AI ฟังสั้น ๆ พอค่ะ
+            เลือก เบิก จบ เริ่มจากเล่าให้ AI ฟังค่ะ
           </h2>
           <p className="mt-0.5 text-[12px] leading-relaxed text-ink-light">
-            พิมพ์แบบที่คุณครูพูดได้เลย ไม่ต้องเป็นภาษาราชการ — AI จะร่างใบเบิกให้ทั้งใบ
+            พิมพ์แบบที่คุณครูพูดได้เลย AI จะร่างใบเบิก ส่งตรวจ และเตรียมขั้นตอนรับด้วย QR Code
           </p>
         </div>
       </div>
@@ -112,7 +112,9 @@ export function AiComposerReviewScreen({
       <div
         className={cn(
           'flex items-start gap-2.5 rounded-xl border-2 p-3',
-          allConfident ? 'border-primary-500 bg-primary-50' : 'border-attention-500 bg-attention-50',
+          allConfident
+            ? 'border-primary-500 bg-primary-50'
+            : 'border-attention-500 bg-attention-50',
         )}
       >
         <Sparkles

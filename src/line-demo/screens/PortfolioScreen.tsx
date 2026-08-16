@@ -3,7 +3,7 @@ import { Award, BookOpen, Plus, Sparkles, Trophy } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 /**
- * แฟ้มสะสมงาน ว.PA (Flow G)
+ * Auto Portfolio สำหรับ ว.PA (Flow G)
  * ระบบเก็บผลงานให้เองระหว่างปี — ครูไม่ต้องรวบรวมย้อนหลังตอนใกล้ส่ง
  * แถบความครบถ้วนบอกด้วยว่า "ขาดด้านไหน" ไม่ใช่แค่ตัวเลขเปอร์เซ็นต์
  */
@@ -68,7 +68,7 @@ export function PortfolioScreen() {
       <div className="rounded-xl border border-slate-200 bg-white p-4">
         <div className="mb-2 flex items-end justify-between">
           <span className="font-display text-[14px] font-bold text-ink">
-            ความครบถ้วนของแฟ้มปีนี้
+            ความครบถ้วนของ Auto Portfolio ปีนี้
           </span>
           <span className="font-display text-[18px] font-bold text-grow-700">{completeness}%</span>
         </div>
@@ -80,12 +80,12 @@ export function PortfolioScreen() {
         </div>
         <p className="mt-2 text-[12px] text-ink-light">
           {remaining === 0
-            ? 'เขียนสรุปครบทุกชิ้นแล้วค่ะ เหลือด้านการพัฒนาตนเองอีก 1 กิจกรรม'
-            : `ยังขาดด้านการพัฒนาตนเอง และมีผลงาน ${remaining} ชิ้นที่ยังไม่ได้เขียนสรุป`}
+            ? 'สรุปครบทุกชิ้นแล้วค่ะ เหลือด้านการพัฒนาตนเองอีก 1 กิจกรรม'
+            : `ระบบเก็บหลักฐานไว้แล้ว เหลือผลงาน ${remaining} ชิ้นที่ต้องให้ AI ช่วยเรียบเรียงสรุป`}
         </p>
       </div>
 
-      <h3 className="font-display text-[15px] font-bold text-ink">ไทม์ไลน์ผลงาน ปี 2567</h3>
+      <h3 className="font-display text-[15px] font-bold text-ink">ไทม์ไลน์หลักฐาน ว.PA ปี 2567</h3>
 
       <ol className="relative space-y-3 border-l-2 border-slate-200 pl-5">
         {ITEMS.map((item) => {
@@ -98,7 +98,9 @@ export function PortfolioScreen() {
               <span
                 aria-hidden
                 className={`absolute -left-[30px] flex h-8 w-8 items-center justify-center rounded-full border-2 bg-white ${
-                  waiting ? 'border-attention-500 text-attention-600' : 'border-grow-600 text-grow-700'
+                  waiting
+                    ? 'border-attention-500 text-attention-600'
+                    : 'border-grow-600 text-grow-700'
                 }`}
               >
                 <Icon className="h-4 w-4" />

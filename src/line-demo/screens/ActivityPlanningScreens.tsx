@@ -1,13 +1,7 @@
 import { AlertCircle, FileWarning, Mic, Sparkles, Users } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import type { ActivityPlanForm, BudgetPlanItem, PlanningQuestion } from '@/types';
-import {
-  Field,
-  SectionTitle,
-  StatusPill,
-  inputClass,
-  textareaClass,
-} from '../components/MobileUi';
+import { Field, SectionTitle, StatusPill, inputClass, textareaClass } from '../components/MobileUi';
 
 const baht = (value: number) => value.toLocaleString('th-TH');
 
@@ -59,7 +53,9 @@ export function PlanningInfoScreen({
         </div>
       )}
 
-      <SectionTitle hint="กรอกเท่าที่รู้ก็พอ ไม่ต้องครบทุกช่อง">ข้อมูลกิจกรรม</SectionTitle>
+      <SectionTitle hint="กรอกเท่าที่รู้ก็พอ AI จะช่วยต่อเรื่องอุปกรณ์ ราคาอ้างอิง และเอกสาร">
+        ข้อมูลกิจกรรม
+      </SectionTitle>
 
       <Field label="ชื่อกิจกรรม">
         <input
@@ -150,10 +146,10 @@ export function PlanningInfoScreen({
           </span>
           <div className="min-w-0">
             <p className="font-display text-[14px] font-bold text-ink">
-              ไม่อยากกรอกเอง? ให้ AI ช่วยได้ค่ะ
+              เริ่มจากประโยคเดียว ให้ AI ช่วยตั้งต้นค่ะ
             </p>
             <p className="mt-0.5 text-[11px] leading-relaxed text-ink-light">
-              เล่าสั้น ๆ 1 บรรทัด แล้ว AI จะเติมช่องด้านบนให้
+              เล่าสั้น ๆ 1 บรรทัด แล้ว AI จะเติมข้อมูลกิจกรรมด้านบนให้
             </p>
           </div>
         </div>
@@ -308,7 +304,9 @@ export function PlanningBudgetScreen({
 
   return (
     <div className="space-y-3">
-      <SectionTitle hint="ตรวจดูให้ครบ แล้วค่อยส่งไปทำใบเบิก">รายการงบที่ AI คิดให้</SectionTitle>
+      <SectionTitle hint="ตรวจอุปกรณ์ ราคาอ้างอิง และผู้รับผิดชอบ ก่อนส่งต่อไปทำใบเบิก">
+        รายการงบที่ AI คิดให้
+      </SectionTitle>
 
       {/* ยอดรวมอยู่บนสุด เพราะเป็นตัวเลขที่ครูอยากเห็นก่อน */}
       <div className="flex items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white p-3">
@@ -365,7 +363,7 @@ export function PlanningBudgetScreen({
         <FileWarning className="mt-0.5 h-4 w-4 shrink-0 text-ink-light" aria-hidden />
         <p className="text-[11px] leading-relaxed text-ink-light">
           <strong className="block font-bold text-ink">กดแล้วจะเกิดอะไรต่อ</strong>
-          ระบบจะส่งรายการนี้ไปหน้าเบิกงบ ให้คุณครูเลือกผู้อนุมัติแล้วส่งขออนุมัติได้เลย
+          ระบบจะส่งรายการนี้ไปหน้าเลือก เบิก จบ ให้คุณครูเลือกผู้อนุมัติแล้วส่งขออนุมัติได้เลย
         </p>
       </div>
     </div>

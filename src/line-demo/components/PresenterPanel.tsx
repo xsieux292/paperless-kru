@@ -122,8 +122,15 @@ export function PresenterPanel({
         </h3>
         <ul className="mt-2 space-y-2">
           {step.why.map((reason) => (
-            <li key={reason} className="flex items-start gap-2 text-base leading-relaxed text-ink-light">
-              <Check className="mt-1 h-4 w-4 shrink-0 text-primary-600" strokeWidth={3} aria-hidden />
+            <li
+              key={reason}
+              className="flex items-start gap-2 text-base leading-relaxed text-ink-light"
+            >
+              <Check
+                className="mt-1 h-4 w-4 shrink-0 text-primary-600"
+                strokeWidth={3}
+                aria-hidden
+              />
               <span>{reason}</span>
             </li>
           ))}
